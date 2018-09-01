@@ -1,0 +1,57 @@
+## 网络求解设置
+## 注：所有以'#'开头的行均为注释行，对应的配置不会生效
+
+[network]
+# 模型尺寸：长,宽,高
+modelSize: 10, 10, 10
+# 特征尺度(m)
+characterLength: 1E-9
+# 孔隙半径参数：均值,标准差(lc)
+radiusParams: 20, 3
+# (与radiusParams二选一，都存在时优先使用curvature)孔喉半径参数：均值,标准差(lc)
+curvature: 0.5
+# (与curvature二选一，都存在时优先使用curvature)孔喉弯曲度
+# throatParams: 65, 10
+# 配位数参数：均值,标准差
+coorParams: 3, 0.5
+# 孔隙率
+porosity: 0.1
+# (可选)各项异性参数
+anisotropy: 1, 1, 1
+
+[gas]
+# 摩尔质量(kg/mol)
+M = 0.016
+# 气体常数(m^3·Pa/(K·mol))
+R = 8.314472
+# 温度(K)
+T = 298.15
+# 粘度(Pa·s)
+u = 1.14E-5
+
+[status]
+# 边界条件，0表示封闭边界，1表示定压力边界，顺序为(-x, +x, -y, +y, -z, +z)
+boundaryType = 1, 1, 0, 0, 0, 0
+# 边界条件值，当边界条件为定压力边界时，该值表示压力值(Pa)
+boundaryValue = 2E5, 1E5, 0, 0, 0, 0
+# 初始条件，0表示常数值，1表示线性值
+initialType = 1
+# 初始条件为0（常数）时，初始条件值填写一个数，表示初始压力值(Pa)；初始条件为1（线性）时，填写6个数，用相对方向的两个值表示
+initialValue = 2E5, 1E5, 0, 0, 0, 0
+
+[solver]
+# 方程组解法：J表示使用Jacobi迭代法，GS表示使用GS迭代法（建议，收敛速度会加快）
+solverType = GS
+# 是否考虑尺度效应，0表示不考虑，1表示考虑（建议，几乎不增加耗时）
+scaleEffect = 0
+
+[iteration]
+# 是否进行渗透率计算，0表示不计算，其他数字表示每多少次迭代计算一次（会消耗一次迭代的时间）
+showPermeability = 10
+# 是否进行过程保存，0表示不保存，其他数字表示没多少次迭代保存一次（用于异常恢复）
+save = 50
+# 保存文件名（默认保存到data/<fileName>_networkStatus_xxx.obj目录下，xxx为当前总迭代次数）
+fileName = test
+# 迭代终止条件（Pa，单次迭代的压力变化最大值与平均值，二者满足其一即终止）
+maxDeltaP = 1
+aveDeltaP = 0.1

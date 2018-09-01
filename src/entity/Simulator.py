@@ -17,11 +17,6 @@ import numpy as np
 
 sys.path.append('./')
 from utils import Tools
-from GasConstant import GasConstant
-from NetworkStructure import NetworkStructureHandler
-from NetworkStructure import NetworkStructure
-from NetworkStatus import NetworkStatusHandler
-from NetworkStatus import NetworkStatus
 
 
 class Simulator(object):
@@ -120,7 +115,6 @@ class Simulator(object):
         :return:
         """
         c = 1.0
-        deltaPV = np.zeros(self.ns.model_size)
         if self.solver_type == 'J':
             new_pressure = np.zeros(self.ns.model_size)
         for i in range(self.ns.model_size[0]):

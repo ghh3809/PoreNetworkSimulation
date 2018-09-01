@@ -57,8 +57,8 @@ class NetworkStatusHandler(object):
 
             # self.initial_type
             self.initial_type = int(conf.get("status", "initialType"))
-            if self.initial_type != 0 and self.initial_type != 1:
-                raise Exception("param status.initial_type should be 0 or 1!")
+            if self.initial_type < 0 or self.initial_type > 3:
+                raise Exception("param status.initial_type should be 0-3!")
 
             # self.initial_value
             if self.initial_type == 0:
@@ -143,7 +143,8 @@ class NetworkStatus(object):
         print "初始化网络状态中……",
         if self.sc.initial_type == 0:
             self.pressure = np.multiply(np.ones(self.model_size), self.sc.initial_value)
-        else:
+        elif self.sc.initial_type == 1:
+            # 公式: y = kx + C
             self.pressure = np.zeros(self.model_size)
             for i in range(self.model_size[0]):
                 for j in range(self.model_size[1]):
@@ -157,6 +158,47 @@ class NetworkStatus(object):
                         else:
                             self.pressure[i, j, k] = (float(k) / float(self.model_size[2] - 1)) * (
                                         self.sc.initial_value[5] - self.sc.initial_value[4]) + self.sc.initial_value[4]
+        elif self.sc.initial_type == 2:
+            # 公式: P = sqrt(kx + C)
+            self.pressure = np.zeros(self.model_size)
+            if self.sc.initial_value[0] + self.sc.initial_value[1] > 0:
+                C = np.square(self.sc.initial_value[0])
+                kk = (np.square(self.sc.initial_value[1]) - np.square(self.sc.initial_value[0])) / float(self.model_size[0] - 1)
+            elif self.sc.initial_value[2] + self.sc.initial_value[3] > 0:
+                C = np.square(self.sc.initial_value[2])
+                kk = (np.square(self.sc.initial_value[3]) - np.square(self.sc.initial_value[2])) / float(self.model_size[1] - 1)
+            else:
+                C = np.square(self.sc.initial_value[4])
+                kk = (np.square(self.sc.initial_value[5]) - np.square(self.sc.initial_value[4])) / float(self.model_size[2] - 1)
+            for i in range(self.model_size[0]):
+                for j in range(self.model_size[1]):
+                    for k in range(self.model_size[2]):
+                        if self.sc.initial_value[0] + self.sc.initial_value[1] > 0:
+                            self.pressure[i, j, k] = np.sqrt(kk * i + C)
+                        elif self.sc.initial_value[2] + self.sc.initial_value[3] > 0:
+                            self.pressure[i, j, k] = np.sqrt(kk * j + C)
+                        else:
+                            self.pressure[i, j, k] = np.sqrt(kk * k + C)
+        elif self.sc.initial_type == 3:
+            self.pressure = np.zeros(self.model_size)
+            if self.sc.initial_value[0] + self.sc.initial_value[1] > 0:
+                layer_pressure = self.cal_layer_pressure(self.sc.initial_value[0], self.sc.initial_value[1],
+                                                         self.model_size[0])
+            elif self.sc.initial_value[2] + self.sc.initial_value[3] > 0:
+                layer_pressure = self.cal_layer_pressure(self.sc.initial_value[2], self.sc.initial_value[3],
+                                                         self.model_size[1])
+            else:
+                layer_pressure = self.cal_layer_pressure(self.sc.initial_value[4], self.sc.initial_value[5],
+                                                         self.model_size[2])
+            for i in range(self.model_size[0]):
+                for j in range(self.model_size[1]):
+                    for k in range(self.model_size[2]):
+                        if self.sc.initial_value[0] + self.sc.initial_value[1] > 0:
+                            self.pressure[i, j, k] = layer_pressure[i]
+                        elif self.sc.initial_value[2] + self.sc.initial_value[3] > 0:
+                            self.pressure[i, j, k] = layer_pressure[j]
+                        else:
+                            self.pressure[i, j, k] = layer_pressure[k]
         print "完成"
 
     def get_kn(self, simulator):
@@ -203,11 +245,70 @@ class NetworkStatus(object):
         :param simulator: 求解器，主要为了获取计算缓存
         :return:
         """
-        perm_coef = 2 * self.gc.u * (self.model_size[0] - 1) * self.gc.R * self.gc.T / \
-            (self.ns.character_length * self.ns.unit_size * self.gc.M *
-             (self.sc.boundary_value[0] ** 2 - self.sc.boundary_value[1] ** 2))
+        perm_coef = np.abs(2 * self.gc.u * (self.model_size[0] - 1) * self.gc.R * self.gc.T / \
+                           (self.ns.character_length * self.ns.unit_size * self.gc.M *
+                            (self.sc.boundary_value[0] ** 2 - self.sc.boundary_value[1] ** 2)))
         ave_mass_flux = np.abs(np.average(np.sum(self.get_mass_flux(simulator), 3)[0, :, :]))
         return perm_coef * ave_mass_flux
+
+    def __get_ave_kn_coef(self):
+        """
+        计算kn缓存: KnCoef = sqrt(πRT/2M) * μ / r，计算时有 Kn = KnCoef / p
+        :return:
+        """
+        kn_cache = np.zeros(self.ns.model_size + [26])
+        for i in range(self.model_size[0]):
+            for j in range(self.model_size[1]):
+                for k in range(self.model_size[2]):
+                    ind1 = (i, j, k)
+                    for l in range(26):
+                        rp = Tools.Tools.get_relative_position(l)
+                        ind2 = tuple(np.add(rp, (i, j, k)))
+                        if (0 <= ind2[0] < self.model_size[0]) \
+                                and (0 <= ind2[1] < self.model_size[1]) \
+                                and (0 <= ind2[2] < self.model_size[2]):
+                            throat_r = self.ns.throatR[i, j, k, l] * self.ns.character_length
+                            kn_cache[i, j, k, l] = np.sqrt(
+                                np.pi * self.gc.R * self.gc.T / 2.0 / self.gc.M) * self.gc.u / throat_r
+        return np.average(kn_cache[1:-1, 1:-1, 1:-1, :])
+
+    @staticmethod
+    def __cal_eff_mass_flux(pressure1, pressure2, ave_kn_coef):
+        """
+        计算等效质量流量
+        :param pressure1: 压力1
+        :param pressure2: 压力2
+        :return:
+        """
+        ave_p = (pressure1 + pressure2) / 2.0
+        kn = ave_kn_coef / ave_p
+        f = 1.0 / (1.0 + 0.5 * kn)
+        return ((1.0 + 4.0 * kn) * f + 64.0 / 3.0 / np.pi * kn * (1.0 - f)) * ave_p * (pressure1 - pressure2)
+
+    def cal_layer_pressure(self, pressure1, pressure2, size):
+        """
+        计算各层初始压力
+        :param pressure1: 压力1
+        :param pressure2: 压力2
+        :param size: 总层数
+        :return:
+        """
+        pressure = np.zeros(size)
+        C = np.square(pressure1)
+        kk = (np.square(pressure2) - np.square(pressure1)) / float(size - 1)
+        for i in range(size):
+            pressure[i] = np.sqrt(kk * i + C)
+        ave_kn_coef = self.__get_ave_kn_coef()
+        while True:
+            pressure_old = pressure.copy()
+            for i in range(1, size - 1):
+                flux1 = self.__cal_eff_mass_flux(pressure[i - 1], pressure[i], ave_kn_coef)
+                flux2 = self.__cal_eff_mass_flux(pressure[i], pressure[i + 1], ave_kn_coef)
+                ratio = flux1 / flux2 * (pressure[i] - pressure[i + 1]) / (pressure[i - 1] - pressure[i])
+                pressure[i] = pressure[i + 1] + (ratio / (1 + ratio)) * (pressure[i - 1] - pressure[i + 1])
+            if np.max(np.abs(np.subtract(pressure, pressure_old))) < 1:
+                break
+        return pressure
 
 
 if __name__ == '__main__':

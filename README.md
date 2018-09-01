@@ -44,28 +44,28 @@
 
 ```
 PoreNetworkSimulation                ── 工程目录
-|
+│
 ├─ src                               ── 源码包
-┆  ┆
-┆  ├─ config                         ── 配置
-┆  ┆  └─ config                      ── 配置文件
-┆  ┆
-┆  ├─ data                           ── 数据
-┆  ┆  └─ <file>                      ── 数据文件
-┆  ┆
-┆  ├─ entity                         ── 实体
-┆  ┆  ├─ GasConstant.py              ── 气体状态类
-┆  ┆  ├─ NetworkStatus.py            ── 网络状态类
-┆  ┆  ├─ NetworkStructure.py         ── 网络结构类
-┆  ┆  └─ Simulator.py                ── 求解器类
-┆  ┆
-┆  ├─ model                          ── 模型
-┆  ┆  └─ CalculatePermeability.py    ── 计算渗透率模型
-┆  ┆
-┆  └─ utils                          ── 常用
-┆     └─ Tools.py                    ── 通用工具类
-┆
-└─ .idea              ── 工程配置
+│  │
+│  ├─ config                         ── 配置
+│  │  └─ config                      ── 配置文件
+│  │
+│  ├─ data                           ── 数据
+│  │  └─ <file>                      ── 数据文件
+│  │
+│  ├─ entity                         ── 实体
+│  │  ├─ GasConstant.py              ── 气体状态类
+│  │  ├─ NetworkStatus.py            ── 网络状态类
+│  │  ├─ NetworkStructure.py         ── 网络结构类
+│  │  └─ Simulator.py                ── 求解器类
+│  │
+│  ├─ model                          ── 模型
+│  │  └─ CalculatePermeability.py    ── 计算渗透率模型
+│  │
+│  └─ utils                          ── 常用
+│     └─ Tools.py                    ── 通用工具类
+│
+└─ .idea                             ── 工程配置
 ```
 
 ### 4. 运行方式

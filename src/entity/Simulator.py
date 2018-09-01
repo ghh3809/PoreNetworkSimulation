@@ -23,7 +23,7 @@ class Simulator(object):
     """
     求解器基本类
     """
-    def __init__(self, config_file='./config.ini/config.ini'):
+    def __init__(self, config_file='./config/config.ini'):
         """
         利用配置创建求解器
         :param network_config: 配置实例
@@ -36,8 +36,8 @@ class Simulator(object):
         self.ns = None
 
         if not os.path.exists(config_file):
-            logging.error("No solver config.ini file detected!")
-            raise Exception("No solver config.ini file detected!")
+            logging.error("No solver config file detected!")
+            raise Exception("No solver config file detected!")
         conf = configparser.ConfigParser()
         conf.read(config_file, encoding='utf-8-sig')
 
@@ -56,8 +56,8 @@ class Simulator(object):
             self.print_config()
 
         except Exception as e:
-            logging.error("Load config.ini fail: [" + str(e) + "]")
-            raise Exception("Load config.ini fail: [" + str(e) + "]")
+            logging.error("Load config fail: [" + str(e) + "]")
+            raise Exception("Load config fail: [" + str(e) + "]")
 
     def print_config(self):
         """

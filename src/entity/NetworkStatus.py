@@ -26,14 +26,14 @@ class NetworkStatusHandler(object):
     """
     网络配置文件处理类
     """
-    def __init__(self, config_file='./config.ini/config.ini'):
+    def __init__(self, config_file='./config/config.ini'):
         """
         初始化
-        :param config_file: 配置文件，默认位置'./config.ini/config.ini'
+        :param config_file: 配置文件，默认位置'./config/config.ini'
         """
         if not os.path.exists(config_file):
-            logging.error("No status config.ini file detected!")
-            raise Exception("No status config.ini file detected!")
+            logging.error("No status config file detected!")
+            raise Exception("No status config file detected!")
         conf = configparser.ConfigParser()
         conf.read(config_file, encoding='utf-8-sig')
 
@@ -78,8 +78,8 @@ class NetworkStatusHandler(object):
             self.print_config()
 
         except Exception as e:
-            logging.error("Load config.ini fail: [" + str(e) + "]")
-            raise Exception("Load config.ini fail: [" + str(e) + "]")
+            logging.error("Load config fail: [" + str(e) + "]")
+            raise Exception("Load config fail: [" + str(e) + "]")
 
     def print_config(self):
         """

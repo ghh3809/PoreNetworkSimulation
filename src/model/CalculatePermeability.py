@@ -28,7 +28,7 @@ from entity import Simulator as Simu
 
 class Iterator(object):
 
-    def __init__(self, config_file='./config/config', status_file_name=None, iters=0):
+    def __init__(self, config_file='./config.ini/config.ini', status_file_name=None, iters=0):
         """
         利用配置创建迭代器
         :param config_file: 配置文件
@@ -44,8 +44,8 @@ class Iterator(object):
         self.permeability = [0, 0, 0]
 
         if not os.path.exists(config_file):
-            logging.error("No iteration config file detected!")
-            raise Exception("No iteration config file detected!")
+            logging.error("No iteration config.ini file detected!")
+            raise Exception("No iteration config.ini file detected!")
         conf = configparser.ConfigParser()
         conf.read(config_file, encoding='utf-8-sig')
 
@@ -77,8 +77,8 @@ class Iterator(object):
             self.print_config()
 
         except Exception as e:
-            logging.error("Load config fail: [" + str(e) + "]")
-            raise Exception("Load config fail: [" + str(e) + "]")
+            logging.error("Load config.ini fail: [" + str(e) + "]")
+            raise Exception("Load config.ini fail: [" + str(e) + "]")
 
     def print_config(self):
         """
@@ -107,9 +107,9 @@ class Iterator(object):
         return self.permeability[0] - (ratio / (1 - ratio) * delta2)
 
     @staticmethod
-    def create_status_from_conf(gas_conf_file='./config/config',
-                                structure_conf_file='./config/config',
-                                status_conf_file='./config/config'):
+    def create_status_from_conf(gas_conf_file='./config.ini/config.ini',
+                                structure_conf_file='./config.ini/config.ini',
+                                status_conf_file='./config.ini/config.ini'):
         """
         从配置文件新建网络状态
         :return:
@@ -135,7 +135,7 @@ class Iterator(object):
         return network_status
 
     @staticmethod
-    def create_simulator_from_conf(simulator_conf_file='./config/config'):
+    def create_simulator_from_conf(simulator_conf_file='./config.ini/config.ini'):
         """
         从配置文件加载求解器
         :return:

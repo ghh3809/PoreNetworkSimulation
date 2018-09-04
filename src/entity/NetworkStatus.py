@@ -213,10 +213,11 @@ class NetworkStatus(object):
         """
         获取当前状态的质量流量
         :param simulator: 求解器实例，主要为了获取求解器中的缓存
-        :return:
+        :return: mass_flux, velocity
         """
         c = 1.0
         deltaPV = np.zeros(self.model_size + [26])
+        velocity = np.zeros(self.model_size + [26])
         for i in range(self.model_size[0]):
             for j in range(self.model_size[1]):
                 for k in range(self.model_size[2]):
@@ -237,7 +238,8 @@ class NetworkStatus(object):
                             else:
                                 deltaPV[indt] = simulator.darcy_cache[indt] * p_ave * (self.pressure[ind1] - self.pressure[ind2]) \
                                       * simulator.length_cache[indt] * self.ns.weight[indt]
-        return deltaPV * (self.gc.M / (self.gc.R * self.gc.T))
+                            velocity[indt] = deltaPV[indt] / p_ave / np.pi / np.square(self.ns.throatR[indt] * self.ns.character_length)
+        return deltaPV * (self.gc.M / (self.gc.R * self.gc.T)), velocity
 
     def get_permeability(self, simulator):
         """
@@ -248,7 +250,8 @@ class NetworkStatus(object):
         perm_coef = np.abs(2 * self.gc.u * (self.model_size[0] - 1) * self.gc.R * self.gc.T / \
                            (self.ns.character_length * self.ns.unit_size * self.gc.M *
                             (self.sc.boundary_value[0] ** 2 - self.sc.boundary_value[1] ** 2)))
-        ave_mass_flux = np.abs(np.average(np.sum(self.get_mass_flux(simulator), 3)[0, :, :]))
+        mass_flux, velocity = self.get_mass_flux(simulator)
+        ave_mass_flux = np.abs(np.average(np.sum(mass_flux, 3)[0, :, :]))
         return perm_coef * ave_mass_flux
 
     def __get_ave_kn_coef(self):

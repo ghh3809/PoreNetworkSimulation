@@ -133,6 +133,22 @@ class Tools(object):
         else:
             return Tools.transfer_dict[tuple(no)]
 
+    @staticmethod
+    def generate_randi_from_list(prob):
+        """
+        根据概率序列生成随机数
+        :param prob:
+        :return:
+        """
+        sum = 0
+        prob = np.divide(prob, float(np.sum(prob)))
+        target = np.random.rand()
+        for index in range(len(prob)):
+            sum += prob[index]
+            if sum > target:
+                return index
+        return len(prob) - 1
+
 
 if __name__ == '__main__':
     print Tools.create_normal_dist(0, 1, [2, 3])

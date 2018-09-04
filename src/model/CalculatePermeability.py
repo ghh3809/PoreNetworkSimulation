@@ -26,7 +26,7 @@ from entity import NetworkStatus as Status
 from entity import Simulator as Simu
 
 
-class Iterator(object):
+class SeepageIterator(object):
 
     def __init__(self, config_file='./config/config.ini', status_file_name=None, iters=0):
         """
@@ -231,4 +231,4 @@ class Iterator(object):
 
 
 if __name__ == '__main__':
-    Iterator().start_simulation()
+    SeepageIterator(status_file_name='./data/dispersion300_networkStatus_1000.obj', iters=1000).start_simulation()

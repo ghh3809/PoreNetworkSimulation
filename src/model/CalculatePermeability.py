@@ -26,9 +26,11 @@ from entity import NetworkStatus as Status
 from entity import Simulator as Simu
 from entity import StatusCache as Cache
 
+
 logging_flag = False
 if __name__ == "__main__":
     logging_flag = True
+
 
 class SeepageIterator(object):
 

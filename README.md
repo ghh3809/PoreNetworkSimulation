@@ -57,10 +57,12 @@ PoreNetworkSimulation                ── 工程目录
 │  │  ├─ GasConstant.py              ── 气体状态类
 │  │  ├─ NetworkStatus.py            ── 网络状态类
 │  │  ├─ NetworkStructure.py         ── 网络结构类
-│  │  └─ Simulator.py                ── 求解器类
+│  │  ├─ Simulator.py                ── 求解器类
+│  │  └─ StatusCache.py              ── 计算缓存类
 │  │
 │  ├─ model                          ── 模型
-│  │  └─ CalculatePermeability.py    ── 计算渗透率模型
+│  │  ├─ CalculatePermeability.py    ── 计算渗透率模型
+│  │  └─ Dispersion.py               ── 模拟机械弥散模型
 │  │
 │  └─ utils                          ── 常用
 │     └─ Tools.py                    ── 通用工具类

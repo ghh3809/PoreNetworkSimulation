@@ -10,6 +10,8 @@ Desc: 工具类
 """
 
 import numpy as np
+import logging
+import sys
 
 
 class Tools(object):
@@ -140,14 +142,38 @@ class Tools(object):
         :param prob:
         :return:
         """
-        sum = 0
+        sum_all = 0
         prob = np.divide(prob, float(np.sum(prob)))
         target = np.random.rand()
         for index in range(len(prob)):
-            sum += prob[index]
-            if sum > target:
+            sum_all += prob[index]
+            if sum_all > target:
                 return index
         return len(prob) - 1
+
+    @staticmethod
+    def set_logging(log_path, file_level=logging.DEBUG, output_level=logging.DEBUG):
+        """
+        设置logging
+        :param log_path: 日志路径
+        :param file_level: 文件日志等级
+        :param output_level: 控制台日志等级
+        :return:
+        """
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+
+        formatter = logging.Formatter("[%(asctime)s]\t[%(levelname)s]\t[%(message)s]")
+        handler = logging.FileHandler(log_path, 'w')
+        handler.setLevel(file_level)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
+        formatter = logging.Formatter("%(asctime)s: %(message)s")
+        handler = logging.StreamHandler(stream=sys.stdout)
+        handler.setLevel(output_level)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
 
 if __name__ == '__main__':

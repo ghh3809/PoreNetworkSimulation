@@ -15,7 +15,6 @@ import logging
 import configparser
 import numpy as np
 
-sys.path.append('./')
 from utils import Tools
 
 
@@ -23,10 +22,10 @@ class NetworkStructureHandler(object):
     """
     网络配置文件处理类
     """
-    def __init__(self, config_file='./config/config.ini'):
+    def __init__(self, config_file='../config/config.ini'):
         """
         初始化
-        :param config_file: 配置文件，默认位置'./config/config.ini'
+        :param config_file: 配置文件，默认位置'../config/config.ini'
         """
         if not os.path.exists(config_file):
             logging.error("No network config file detected!")
@@ -60,7 +59,6 @@ class NetworkStructureHandler(object):
             # self.curvature
             try:
                 self.curvature = float(conf.get("network", "curvature"))
-                logging.info("Curvature params detect!")
                 if self.curvature <= 0:
                     raise Exception("param network.curvature should be positive!")
             except configparser.NoOptionError:
@@ -70,14 +68,12 @@ class NetworkStructureHandler(object):
             # self.throat_params
             try:
                 self.__throat_params_str = conf.get("network", "throatParams").split(",")
-                logging.info("Throat params detect!")
                 self.throat_params = [float(x.strip()) for x in self.__throat_params_str]
                 if len(self.throat_params) != 2:
                     raise Exception("param network.throatParams should have length 2!")
                 if min(self.throat_params) <= 0:
                     raise Exception("param network.throat_params should be positive!")
             except configparser.NoOptionError:
-                logging.info("Throat params not detect!")
                 if self.curvature != 0:
                     self.throat_params = list()
                 else:
@@ -101,15 +97,13 @@ class NetworkStructureHandler(object):
             # self.anisotropy
             try:
                 self.__anisotropy_str = conf.get("network", "anisotropy").split(",")
-                logging.info("Anisotropy params detect!")
                 self.anisotropy = [float(x.strip()) for x in self.__anisotropy_str]
                 if len(self.anisotropy) != 3:
                     raise Exception("param network.anisotropy should have length 3!")
                 if min(self.anisotropy) <= 0:
                     raise Exception("param network.anisotropy should be positive!")
             except configparser.NoOptionError:
-                logging.info("Anisotropy params not detect!")
-                self.anisotropy = [1, 1, 1]
+                self.anisotropy = [1.0, 1.0, 1.0]
 
             self.print_config()
 
@@ -122,16 +116,20 @@ class NetworkStructureHandler(object):
         打印当前的配置
         :return:
         """
-        print "------------------读取网络结构配置文件------------------"
-        print "模型尺寸:", self.model_size
-        print "特征尺度(m):", self.character_length
-        print "孔隙半径参数(lc):", self.radius_params
+        logging.info("------------------读取网络结构配置文件------------------")
+        logging.info("模型尺寸: " + str(self.model_size[0]) + " × " + str(self.model_size[1]) + \
+                     " × " + str(self.model_size[2]))
+        logging.info("特征尺度(m): " + str(self.character_length))
+        logging.info("孔隙半径参数(lc):")
+        logging.info("    均值 = " + str(self.radius_params[0]) + ", 标准差 = " + str(self.radius_params[1]))
         if self.curvature != 0:
-            print "孔喉曲率(lc):", self.curvature
+            logging.info("孔喉曲率(lc): " + str(self.curvature))
         else:
-            print "孔喉半径参数(lc):", self.throat_params
-        print "配位数参数:", self.coor_params
-        print "各向异性参数:", self.anisotropy
+            logging.info("孔喉半径参数(lc): " + str(self.throat_params))
+        logging.info("配位数参数:")
+        logging.info("    均值 = " + str(self.coor_params[0]) + ", 标准差 = " + str(self.coor_params[1]))
+        logging.info("各向异性参数: " + str(self.anisotropy[0]) + " : " + \
+                     str(self.anisotropy[1]) + " : " + str(self.anisotropy[2]))
 
 
 class NetworkStructure(object):
@@ -157,32 +155,29 @@ class NetworkStructure(object):
         初始化整个网络
         :return:
         """
-        print "------------------初始化网络结构------------------"
+        logging.info("------------------初始化网络结构------------------")
 
-        print "初始化孔隙尺寸……",
+        logging.info("初始化孔隙尺寸……")
         self.radii = Tools.Tools.create_normal_dist(self.nc.radius_params[0], self.nc.radius_params[1], self.model_size)
-        print "完成"
-        print "平均孔隙尺寸(lc):", format(np.average(self.radii), '.4f')
+        logging.info("    平均孔隙尺寸(lc): " + format(np.average(self.radii), '.4f'))
 
-        print "计算单元尺寸……",
+        logging.info("计算单元尺寸……")
         self.unit_size = self.calculate_unit_size()
-        print "完成"
-        print "单元尺寸(lc):", format(self.unit_size, '.4f')
+        logging.info("    单元尺寸(lc): " + format(self.unit_size, '.4f'))
 
-        print "初始化喉道尺寸……",
+        logging.info("初始化喉道尺寸……")
         if self.nc.curvature:
             self.throatR = self.create_throat_from_curvature(self.nc.curvature, self.unit_size)
         else:
-            self.throatR = Tools.Tools.create_normal_dist(self.nc.throat_params[0], self.nc.throat_params[1], self.model_size + [26])
-        print "完成"
-        print "平均喉道尺寸(lc):", format(np.average(self.throatR[1:-1, 1:-1, 1:-1, :]), '.4f')
+            self.throatR = Tools.Tools.create_normal_dist(self.nc.throat_params[0], self.nc.throat_params[1],
+                                                          self.model_size + [26])
+        logging.info("    平均喉道尺寸(lc): " + format(np.average(self.throatR[1:-1, 1:-1, 1:-1, :]), '.4f'))
 
-        print "初始化连接矩阵……",
+        logging.info("初始化连接矩阵……")
         target_coor = Tools.Tools.create_normal_dist(self.nc.coor_params[0], self.nc.coor_params[1], self.model_size)
         self.weight = self.create_weight_data(target_coor)
-        print "完成"
-        print "平均配位数:", format(np.average(np.sum(self.weight[1:-1, 1:-1, 1:-1, :], 3)), '.4f')
-        print "平均权重:", format(np.average(self.weight[1:-1, 1:-1, 1:-1, :]), '.4f')
+        logging.info("    平均配位数: " + format(np.average(np.sum(self.weight[1:-1, 1:-1, 1:-1, :], 3)), '.4f'))
+        logging.info("    平均权重:" + format(np.average(self.weight[1:-1, 1:-1, 1:-1, :]), '.4f'))
 
     def calculate_unit_size(self):
         """
@@ -213,7 +208,6 @@ class NetworkStructure(object):
                 lo = unit_size
             else:
                 hi = unit_size
-        logging.info("Calculate unit size: total iteration times = %d" % iter_count)
         return unit_size
 
     def create_throat_from_curvature(self, curv, unit_size):
@@ -234,26 +228,13 @@ class NetworkStructure(object):
                         if (0 <= ind2[0] < self.model_size[0]) \
                                 and (0 <= ind2[1] < self.model_size[1]) \
                                 and (0 <= ind2[2] < self.model_size[2]):
-                            R1 = self.radii[ind1]
-                            R2 = self.radii[ind2]
-                            L = np.sqrt(np.sum(np.square(rp))) * unit_size
-                            throats[i, j, k, l] = self.cal_throat_radius(R1, R2, L, curv)
+                            r1 = self.radii[ind1]
+                            r2 = self.radii[ind2]
+                            ll = np.sqrt(np.sum(np.square(rp))) * unit_size
+                            throats[i, j, k, l] = self.cal_throat_radius(r1, r2, ll, curv)
+            logging.debug("    计算喉道尺寸中，当前进度 = " + format(float(i) /
+                          float(self.model_size[0]) * 100.0, '.2f') + "%")
         return throats
-
-    @staticmethod
-    def cal_throat_radius(R1, R2, L, curv):
-        """
-        公式：利用曲率计算喉道半径
-        :param R1: 孔隙1半径
-        :param R2: 孔隙2半径
-        :param L: 孔隙间距离
-        :param curv: 曲率
-        :return:
-        """
-        tmp = np.sqrt(2) / 2
-        T1 = R1 / L * tmp / np.power(1 - R1 / L * tmp, curv)
-        T2 = R2 / L * tmp / np.power(1 - R2 / L * tmp, curv)
-        return L * T1 * T2 * np.power(np.power(T1, 1 / curv) + np.power(T2, 1 / curv), -curv)
 
     def create_weight_data(self, target_coor):
         """
@@ -274,10 +255,27 @@ class NetworkStructure(object):
                                 and (0 <= ind2[2] < self.model_size[2]):
                             weight[i, j, k, l] = self.get_weight(target_coor[ind1], target_coor[ind2],
                                                                  self.nc.coor_params[0], self.nc.anisotropy, rp)
+            logging.debug("    计算权重中，当前进度 = " + format(float(i) /
+                          float(self.model_size[0]) * 100.0, '.2f') + "%")
         return weight
 
     @staticmethod
-    def get_weight(coor1, coor2, ave_coor, anisotropy=(1,1,1), rp=(0,0,1)):
+    def cal_throat_radius(r1, r2, l, curv):
+        """
+        公式：利用曲率计算喉道半径
+        :param r1: 孔隙1半径
+        :param r2: 孔隙2半径
+        :param l: 孔隙间距离
+        :param curv: 曲率
+        :return:
+        """
+        tmp = np.sqrt(2) / 2
+        t1 = r1 / l * tmp / np.power(1 - r1 / l * tmp, curv)
+        t2 = r2 / l * tmp / np.power(1 - r2 / l * tmp, curv)
+        return l * t1 * t2 * np.power(np.power(t1, 1 / curv) + np.power(t2, 1 / curv), -curv)
+
+    @staticmethod
+    def get_weight(coor1, coor2, ave_coor, anisotropy=(1, 1, 1), rp=(0, 0, 1)):
         """
         利用配位数获取连接概率
         :param coor1: 配位数1
@@ -302,4 +300,3 @@ class NetworkStructure(object):
 if __name__ == '__main__':
     config_handler = NetworkStructureHandler()
     network_structure = NetworkStructure(config_handler)
-

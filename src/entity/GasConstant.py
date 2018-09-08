@@ -18,10 +18,10 @@ class GasConstant(object):
     """
     网络配置文件处理类
     """
-    def __init__(self, config_file='./config/config.ini'):
+    def __init__(self, config_file='../config/config.ini'):
         """
         初始化
-        :param config_file: 配置文件，默认位置'./config/config.ini'
+        :param config_file: 配置文件，默认位置'../config/config.ini'
         """
         if not os.path.exists(config_file):
             logging.error("No gas config file detected!")
@@ -62,13 +62,12 @@ class GasConstant(object):
         打印当前的配置
         :return:
         """
-        print "------------------读取气体参数配置文件------------------"
-        print "摩尔质量M(kg/mol):", self.M
-        print "气体常数R(m^3·Pa/(K·mol)):", self.R
-        print "温度T(K):", self.T
-        print "粘度u(Pa·s)", self.u
+        logging.info("------------------读取气体参数配置文件------------------")
+        logging.info("摩尔质量M(kg/mol): " + str(self.M))
+        logging.info("气体常数R(m^3·Pa/(K·mol)): " + str(self.R))
+        logging.info("温度T(K): " + str(self.T))
+        logging.info("粘度u(Pa·s): " + str(self.u))
 
 
 if __name__ == '__main__':
     gas_constant = GasConstant()
-

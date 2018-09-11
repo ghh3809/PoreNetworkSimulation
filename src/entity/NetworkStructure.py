@@ -222,7 +222,7 @@ class NetworkStructure(object):
             for j in range(self.model_size[1]):
                 for k in range(self.model_size[2]):
                     ind1 = (i, j, k)
-                    for l in range(26):
+                    for l in range(13):
                         rp = Tools.Tools.get_relative_position(l)
                         ind2 = tuple(np.add(rp, (i, j, k)))
                         if (0 <= ind2[0] < self.model_size[0]) \
@@ -232,6 +232,7 @@ class NetworkStructure(object):
                             r2 = self.radii[ind2]
                             ll = np.sqrt(np.sum(np.square(rp))) * unit_size
                             throats[i, j, k, l] = self.cal_throat_radius(r1, r2, ll, curv)
+                            throats[ind2[0], ind2[1], ind2[2], 25-l] = throats[i, j, k, l]
             logging.debug("    计算喉道尺寸中，当前进度 = " + format(float(i) /
                           float(self.model_size[0]) * 100.0, '.2f') + "%")
         return throats
@@ -247,7 +248,7 @@ class NetworkStructure(object):
             for j in range(self.model_size[1]):
                 for k in range(self.model_size[2]):
                     ind1 = (i, j, k)
-                    for l in range(26):
+                    for l in range(13):
                         rp = Tools.Tools.get_relative_position(l)
                         ind2 = tuple(np.add(rp, (i, j, k)))
                         if (0 <= ind2[0] < self.model_size[0]) \
@@ -255,6 +256,7 @@ class NetworkStructure(object):
                                 and (0 <= ind2[2] < self.model_size[2]):
                             weight[i, j, k, l] = self.get_weight(target_coor[ind1], target_coor[ind2],
                                                                  self.nc.coor_params[0], self.nc.anisotropy, rp)
+                            weight[ind2[0], ind2[1], ind2[2], 25-l] = weight[i, j, k, l]
             logging.debug("    计算权重中，当前进度 = " + format(float(i) /
                           float(self.model_size[0]) * 100.0, '.2f') + "%")
         return weight
@@ -292,9 +294,9 @@ class NetworkStructure(object):
         w = np.sum(np.multiply(np.divide(np.square(rp).astype(np.float64), np.sum(np.square(rp))), anisotropy)) \
             * q * 3 / np.sum(anisotropy)
         # 用于确定生成的网络
-        # return 1 if w > np.random.rand() else 0
+        return 1 if w > np.random.rand() else 0
         # 用于全连接网络
-        return w
+        # return w
 
 
 if __name__ == '__main__':

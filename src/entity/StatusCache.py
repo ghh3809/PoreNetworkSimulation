@@ -44,7 +44,7 @@ class StatusCache(object):
             for j in range(network_status.model_size[1]):
                 for k in range(network_status.model_size[2]):
                     ind1 = (i, j, k)
-                    for l in range(26):
+                    for l in range(13):
                         rp = Tools.Tools.get_relative_position(l)
                         ind2 = tuple(np.add(rp, (i, j, k)))
                         if (0 <= ind2[0] < network_status.model_size[0]) \
@@ -61,6 +61,10 @@ class StatusCache(object):
                             self.knudsen_cache[i, j, k, l] = 2 * np.pi * np.power(throat_r, 3) / 3.0 * \
                                 np.sqrt(8 * network_status.gc.R * network_status.gc.T /
                                         np.pi / network_status.gc.M)
+                            self.darcy_cache[ind2[0], ind2[1], ind2[2], 25-l] = self.darcy_cache[i, j, k, l]
+                            self.length_cache[ind2[0], ind2[1], ind2[2], 25-l] = self.length_cache[i, j, k, l]
+                            self.kn_cache[ind2[0], ind2[1], ind2[2], 25-l] = self.kn_cache[i, j, k, l]
+                            self.knudsen_cache[ind2[0], ind2[1], ind2[2], 25-l] = self.knudsen_cache[i, j, k, l]
             logging.debug("    计算缓存中，当前进度 = " + format(float(i) /
                           float(network_status.model_size[0]) * 100.0, '.2f') + "%")
         logging.info("完成计算缓存")

@@ -121,6 +121,8 @@ class SeepageIterator(object):
         """
         # 创建网络状态
         if status_file_name is None or not os.path.exists(status_file_name):
+            if status_file_name is not None:
+                logging.warning("Given status file not exists, please check your program!")
             gas_constant = Gas.GasConstant()
             network_structure = Structure.NetworkStructure(Structure.NetworkStructureHandler())
             network_status = Status.NetworkStatus(Status.NetworkStatusHandler(), network_structure, gas_constant)
@@ -135,6 +137,8 @@ class SeepageIterator(object):
 
         # 判断缓存类
         if cache_file_name is None or not os.path.exists(cache_file_name):
+            if status_file_name is not None:
+                logging.warning("Given cache file not exists, please check your program!")
             status_cache = Cache.StatusCache(network_status)
         else:
             logging.info("从文件重建计算缓存中……")
@@ -147,8 +151,11 @@ class SeepageIterator(object):
         simulator.iters = iters
 
         # 保存网络缓存
-        with open('../data/' + self.file_name + "_cache.obj", 'w') as f:
-            cPickle.dump(simulator.sc, f)
+        if not os.path.exists('../data/' + self.file_name + "_cache.obj"):
+            with open('../data/' + self.file_name + "_cache.obj", 'w') as f:
+                cPickle.dump(simulator.sc, f)
+        else:
+            logging.info("Cache file already exists!")
 
         return simulator
 
@@ -237,4 +244,4 @@ class SeepageIterator(object):
 
 
 if __name__ == '__main__':
-    SeepageIterator('../data/seepage_test_status_10.obj', 10, '../data/seepage_test_cache.obj').start_simulation()
+    SeepageIterator().start_simulation()

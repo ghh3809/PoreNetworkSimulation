@@ -152,6 +152,11 @@ class DispersionSolver(object):
         for i in range(self.particles):
             res[i, :, :] = self.simulate_paths()
             logging.debug("Particle ID = " + str(i) + ", Final position = " + str(res[i, -1, :]))
+        with open("../data/final_position_300.txt", "w") as f:
+            for i in range(self.particles):
+                for j in range(total_size + 1):
+                    for k in range(4):
+                        f.write(str(res[i, j, k]) + '\n')
         return res
 
     def simulate_once(self, pos):
@@ -227,7 +232,5 @@ class DispersionSolver(object):
 
 if __name__ == '__main__':
     ds = DispersionSolver('../data/dispersion300_networkStatus_4250_tmp2.obj')
-    # res = ds.start_simulation()
-    # print np.average(res, 0)
     res = ds.start_path_simulation()
     print np.average(res[:, -1, :], 0)

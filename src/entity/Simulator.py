@@ -130,8 +130,8 @@ class Simulator(object):
                                 else:
                                     coef = self.sc.darcy_cache[ind_t1] * p_ave * self.sc.length_cache[ind_t1] * \
                                                    self.ns.ns.weight[ind_t1]
-                                sum_up += coef[i, j, k, l] * self.ns.pressure[ind2]
-                                sum_down += coef[i, j, k, l]
+                                sum_up += coef * self.ns.pressure[ind2]
+                                sum_down += coef
                         if sum_down != 0:
                             new_pressure[i, j, k] = sum_up / sum_down
 

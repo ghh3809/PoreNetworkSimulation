@@ -164,7 +164,7 @@ class Tools(object):
         logger.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter("[%(asctime)s]\t[%(levelname)s]\t[%(message)s]")
-        handler = logging.FileHandler(log_path, 'w')
+        handler = logging.FileHandler(log_path, 'a')
         handler.setLevel(file_level)
         handler.setFormatter(formatter)
         logger.addHandler(handler)

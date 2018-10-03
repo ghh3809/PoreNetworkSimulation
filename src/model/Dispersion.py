@@ -98,6 +98,8 @@ class DispersionSolver(object):
                 self.cache = Cache.StatusCache(self.status)
                 new_file_name = "../data/" + self.file_name + "_cache.obj"
                 logging.info("保存计算缓存: " + str(new_file_name))
+                if not os.path.exists(os.path.dirname(new_file_name)):
+                    os.makedirs(os.path.dirname(new_file_name))
                 with open(new_file_name, 'w') as f:
                     cPickle.dump(self.cache, f)
             else:

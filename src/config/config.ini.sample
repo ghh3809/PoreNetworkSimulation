@@ -53,7 +53,7 @@ showPermeability = 5
 # 是否进行过程保存，0表示不保存，其他数字表示没多少次迭代保存一次（用于异常恢复）
 save = 0
 # 保存文件名（默认保存到data/seepage_<fileName>_status_xxx.obj目录下，xxx为当前总迭代次数）
-fileName = test
+fileName = sample
 # 迭代终止条件（Pa，单次迭代的压力变化最大值与平均值，二者满足其一即终止）
 maxDeltaP = 1
 aveDeltaP = 0.1

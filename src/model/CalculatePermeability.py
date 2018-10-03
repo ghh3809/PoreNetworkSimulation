@@ -151,8 +151,11 @@ class SeepageIterator(object):
         simulator.iters = iters
 
         # 保存网络缓存
-        if not os.path.exists('../data/' + self.file_name + "_cache.obj"):
-            with open('../data/' + self.file_name + "_cache.obj", 'w') as f:
+        cache_path = '../data/' + self.file_name + '_cache.obj'
+        if not os.path.exists(cache_path):
+            if not os.path.exists(os.path.dirname(cache_path)):
+                os.makedirs(os.path.dirname(cache_path))
+            with open(cache_path, 'w') as f:
                 cPickle.dump(simulator.sc, f)
         else:
             logging.info("Cache file already exists!")
@@ -221,6 +224,8 @@ class SeepageIterator(object):
 
             # 保存新文件
             logging.info("保存网络状态: " + str(new_file_name))
+            if not os.path.exists(os.path.dirname(new_file_name)):
+                os.makedirs(os.path.dirname(new_file_name))
             with open(new_file_name, 'w') as f:
                 cPickle.dump(self.simulator.ns, f)
 

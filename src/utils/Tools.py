@@ -12,6 +12,7 @@ Desc: 工具类
 import numpy as np
 import logging
 import sys
+import os
 
 
 class Tools(object):
@@ -152,7 +153,7 @@ class Tools(object):
         return len(prob) - 1
 
     @staticmethod
-    def set_logging(log_path, file_level=logging.DEBUG, output_level=logging.DEBUG):
+    def set_logging(log_path, file_level=logging.INFO, output_level=logging.INFO):
         """
         设置logging
         :param log_path: 日志路径
@@ -162,6 +163,8 @@ class Tools(object):
         """
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
+        if not os.path.exists(os.path.dirname(log_path)):
+            os.makedirs(os.path.dirname(log_path))
 
         formatter = logging.Formatter("[%(asctime)s]\t[%(levelname)s]\t[%(message)s]")
         handler = logging.FileHandler(log_path, 'a')

@@ -48,10 +48,15 @@ PoreNetworkSimulation                ── 工程目录
 ├─ src                               ── 源码包
 │  │
 │  ├─ config                         ── 配置
-│  │  └─ config                      ── 配置文件
+│  │  ├─ config.ini.sample           ── 配置文件示例
+│  │  └─ config.ini                  ── 配置文件
 │  │
 │  ├─ data                           ── 数据
-│  │  └─ <file>                      ── 数据文件
+│  │  ├─ seepage_<name>_cache.obj    ── 计算缓存文件
+│  │  └─ seepage_<name>_status.obj   ── 网络状态文件
+│  │
+│  ├─ log                            ── 日志
+│  │  └─ seepage_<name>.log          ── 日志文件
 │  │
 │  ├─ entity                         ── 实体
 │  │  ├─ GasConstant.py              ── 气体状态类
@@ -67,9 +72,15 @@ PoreNetworkSimulation                ── 工程目录
 │  └─ utils                          ── 常用
 │     └─ Tools.py                    ── 通用工具类
 │
-└─ .idea                             ── 工程配置
+├─ .idea                             ── 工程配置
+│
+└─ requirements.txt                  ── 工程依赖
 ```
 
 ### 4. 运行方式
 
-进入src目录下，运行`python model/CalculatePermeability.py`即可。
+0. 安装python2.7环境，并在进入工程目录后，使用`pip install -r requirements.txt`命令安装依赖库；
+
+1. 进入src/config目录下，设置config.ini文件为计算所需要的参数；
+
+2. 进入src/model目录下，运行`python CalculatePermeability.py`或者`python Dispersion.py`即可。

@@ -268,7 +268,7 @@ class NetworkStatus(object):
         :param scale_effect: 尺度效应
         :return:
         """
-        perm_coef = np.abs(2 * self.gc.u * (self.model_size[0] - 1) * self.gc.R * self.gc.T /
+        perm_coef = np.abs(2 * self.gc.u * self.model_size[0] * self.gc.R * self.gc.T /
                            (self.ns.character_length * self.ns.unit_size * self.gc.M *
                             (self.sc.boundary_value[0] ** 2 - self.sc.boundary_value[1] ** 2)))
         mass_flux, velocity = self.get_mass_flux(status_cache, scale_effect)

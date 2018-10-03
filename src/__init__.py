@@ -1,1 +1,0 @@
-sys.path.append('./')

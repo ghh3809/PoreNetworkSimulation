@@ -154,7 +154,7 @@ class DispersionSolver(object):
         for i in range(self.particles):
             res[i, :, :] = self.simulate_paths()
             logging.debug("Particle ID = " + str(i) + ", Final position = " + str(res[i, -1, :]))
-        with open("../data/final_position_300.txt", "w") as f:
+        with open("../data/" + self.file_name + "_paths.txt", "w") as f:
             for i in range(self.particles):
                 for j in range(total_size + 1):
                     for k in range(4):
@@ -233,6 +233,5 @@ class DispersionSolver(object):
 
 
 if __name__ == '__main__':
-    ds = DispersionSolver('../data/dispersion300_networkStatus_4250_tmp2.obj')
+    ds = DispersionSolver('../data/seepage_uniform300_status_final1.obj')
     res = ds.start_path_simulation()
-    print np.average(res[:, -1, :], 0)

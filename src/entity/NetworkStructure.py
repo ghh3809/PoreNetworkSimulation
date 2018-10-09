@@ -259,6 +259,83 @@ class NetworkStructure(object):
                             weight[ind2[0], ind2[1], ind2[2], 25-l] = weight[i, j, k, l]
             logging.debug("    计算权重中，当前进度 = " + format(float(i) /
                           float(self.model_size[0]) * 100.0, '.2f') + "%")
+        return self.remove_isolated_throats(weight)
+
+    @staticmethod
+    def remove_isolated_throats(weight):
+        """
+        根据权重，去除孤立喉道
+        :param weight: 权重矩阵
+        :return:
+        """
+        model_size = weight.shape[0:-1]
+        connected = np.zeros(model_size, dtype=int)
+        connected_count = 0
+
+        while True:
+            # 寻找起始节点
+            start_node = None
+            for j in range(model_size[1]):
+                for k in range(model_size[2]):
+                    if connected[0, j, k] == 0:
+                        start_node = (0, j, k)
+                        break
+                if start_node is not None:
+                    break
+            if start_node is None:
+                break
+
+            # 从起始节点开始搜索
+            connected_count += 1
+            connected_flag = False
+            queue = [start_node]
+            connected[start_node] = -1
+            current_index = 0
+
+            while current_index < len(queue):
+                node = queue[current_index]
+                if node[0] == model_size[0] - 1:
+                    connected_flag = True
+                for l in range(0, 26):
+                    rp = Tools.Tools.get_relative_position(l)
+                    ind2 = tuple(np.add(rp, node))
+                    if (0 <= ind2[0] < model_size[0]) \
+                            and (0 <= ind2[1] < model_size[1]) \
+                            and (0 <= ind2[2] < model_size[2]) \
+                            and connected[ind2] == 0 \
+                            and weight[node[0], node[1], node[2], l] > 0:
+                        queue.append(ind2)
+                        connected[ind2] = -1
+                current_index += 1
+
+            # 判断连通性
+            logging.debug("    连通域" + str(connected_count) + ": 起始节点 = " + str(start_node) + ", 规模 = " + str(len(queue)) + ', 连通性 = ' + str(connected_flag))
+            if connected_flag:
+                for node in queue:
+                    connected[node] = 1
+
+        # 最终处理
+        isolated_node = 0
+        for i in range(model_size[0]):
+            for j in range(model_size[1]):
+                for k in range(model_size[2]):
+                    if connected[i, j, k] != 1:
+                        isolated_node += 1
+                        for l in range(26):
+                            weight[i, j, k, l] = 0
+        logging.info("清除孤立孔隙: " + str(isolated_node) + ' 个')
+
+        left_count = 0
+        right_count = 0
+        for j in range(model_size[1]):
+            for k in range(model_size[2]):
+                if np.sum(weight[0, j, k, 17:-1]) > 0:
+                    left_count += 1
+                if np.sum(weight[-1, j, k, 0:8]) > 0:
+                    right_count += 1
+        print "Left count =", str(left_count)
+        print "Right count =", str(right_count)
+
         return weight
 
     @staticmethod

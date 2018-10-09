@@ -137,7 +137,7 @@ class SeepageIterator(object):
 
         # 判断缓存类
         if cache_file_name is None or not os.path.exists(cache_file_name):
-            if status_file_name is not None:
+            if cache_file_name is not None:
                 logging.warning("Given cache file not exists, please check your program!")
             status_cache = Cache.StatusCache(network_status)
         else:

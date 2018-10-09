@@ -325,16 +325,16 @@ class NetworkStructure(object):
                             weight[i, j, k, l] = 0
         logging.info("清除孤立孔隙: " + str(isolated_node) + ' 个')
 
-        left_count = 0
-        right_count = 0
-        for j in range(model_size[1]):
-            for k in range(model_size[2]):
-                if np.sum(weight[0, j, k, 17:-1]) > 0:
-                    left_count += 1
-                if np.sum(weight[-1, j, k, 0:8]) > 0:
-                    right_count += 1
-        print "Left count =", str(left_count)
-        print "Right count =", str(right_count)
+        # left_count = 0
+        # right_count = 0
+        # for j in range(model_size[1]):
+        #     for k in range(model_size[2]):
+        #         if np.sum(weight[0, j, k, 17:-1]) > 0:
+        #             left_count += 1
+        #         if np.sum(weight[-1, j, k, 0:8]) > 0:
+        #             right_count += 1
+        # print "Left count =", str(left_count)
+        # print "Right count =", str(right_count)
 
         return weight
 

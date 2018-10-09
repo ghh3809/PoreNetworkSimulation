@@ -273,19 +273,6 @@ class NetworkStatus(object):
                             (self.sc.boundary_value[0] ** 2 - self.sc.boundary_value[1] ** 2))) / \
                         (1.0 - 1.0 / np.sqrt(self.model_size[1] * self.model_size[2]))
         mass_flux, velocity = self.get_mass_flux(status_cache, scale_effect)
-
-        # 统计边界区域有多少孔隙是连通状态
-        # count = 0
-        # count_sum = 0
-        # for j in range (self.model_size[1]):
-        #     for k in range(self.model_size[2]):
-        #         mf = np.sum(mass_flux, 3)[0, j, k]
-        #         if mf > 0:
-        #             count += 1
-        #             count_sum += mf
-        # print count_sum / count
-        # print np.sum(mass_flux, 3)[0, :, :]
-
         ave_mass_flux = np.abs(np.average(np.sum(mass_flux, 3)[0, :, :]))
         return perm_coef * ave_mass_flux
 

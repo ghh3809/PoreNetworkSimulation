@@ -10,7 +10,9 @@ Desc: 计算机械弥散效果
 """
 
 import os
+import re
 import sys
+import time
 import logging
 import cPickle
 import configparser
@@ -30,7 +32,7 @@ if __name__ == "__main__":
 
 class DispersionSolver(object):
 
-    def __init__(self, status_file_name=None, cache_file_name=None, config_file='../config/config.ini'):
+    def __init__(self, config_file='../config/config.ini'):
         """
         利用配置创建迭代器
         :param status_file_name: 网络状态文件
@@ -48,7 +50,7 @@ class DispersionSolver(object):
             # self.file_name
             self.file_name = "dispersion_" + conf.get("dispersion", "fileName")
             if logging_flag:
-                Tools.Tools.set_logging('../log/' + self.file_name + '.log')
+                Tools.Tools.set_logging('../log/' + self.file_name + '.log', output_level=logging.DEBUG)
 
             # self.time_step
             self.time = float(conf.get("dispersion", "time"))
@@ -70,37 +72,44 @@ class DispersionSolver(object):
 
         self.print_config()
 
-        # 创建网络状态
-        logging.info("------------------初始化网络状态------------------")
-        if status_file_name is None or not os.path.exists(status_file_name):
-            logging.info("未发现网络状态文件，正在重新计算中……")
-            seepage_iterator = SeepageIterator()
-            seepage_iterator.start_simulation()
-            status_file_name = "../data/" + seepage_iterator.file_name + "_status.obj"
-            cache_file_name = "../data/" + seepage_iterator.file_name + "_cache.obj"
+        # 判断网络状态是否存在
+        file_name = re.compile("seepage_" + self.file_name[11:] + "_status_(.*?)\.obj")
+        max_iters = 0
+        status_file_name = ""
+        for root, dirs, files in os.walk("../data/"):
+            for file in files:
+                match = file_name.match(file)
+                if match:
+                    current_iters = match.group(1)
+                    if int(current_iters) > max_iters:
+                        max_iters = int(current_iters)
+                        status_file_name = "../data/" + file
 
-        if os.path.exists(status_file_name):
-            logging.info("从文件重建网络状态中……")
-            with open(status_file_name, 'r') as f:
-                self.status = cPickle.load(f)
-        else:
-            raise Exception("Cannot load status file!")
+        if status_file_name == "":
+            raise Exception("未发现合适的网络状态文件，程序退出！")
+
+        logging.info("------------------初始化网络状态------------------")
+        logging.info("【重要】发现网络状态文件（3秒后继续）: " + str(status_file_name))
+        time.sleep(3)
+        logging.info("从文件重建网络状态中……")
+        with open(status_file_name, 'r') as f:
+            self.status = cPickle.load(f)
         self.model_size = self.status.model_size
 
         # 计算网络流量场
+        cache_file_name = "../data/seepage_" + self.file_name[11:] + "_cache.obj"
         mass_flux_file = "../data/" + self.file_name + "_massflux.obj"
         velocity_file = "../data/" + self.file_name + "_velocity.obj"
         if not os.path.exists(mass_flux_file) or not os.path.exists(velocity_file):
             # 没有流量场文件，需要重建
-            if cache_file_name is None or not os.path.exists(cache_file_name):
+            if not os.path.exists(cache_file_name):
                 # 没有缓存文件，从网络状态进行重建
                 logging.info("未发现计算缓存文件，正在重新计算中……")
                 self.cache = Cache.StatusCache(self.status)
-                new_file_name = "../data/" + self.file_name + "_cache.obj"
-                logging.info("保存计算缓存: " + str(new_file_name))
-                if not os.path.exists(os.path.dirname(new_file_name)):
-                    os.makedirs(os.path.dirname(new_file_name))
-                with open(new_file_name, 'w') as f:
+                logging.info("保存计算缓存: " + str(cache_file_name))
+                if not os.path.exists(os.path.dirname(cache_file_name)):
+                    os.makedirs(os.path.dirname(cache_file_name))
+                with open(cache_file_name, 'w') as f:
                     cPickle.dump(self.cache, f)
             else:
                 # 存在网络状态缓存
@@ -151,9 +160,13 @@ class DispersionSolver(object):
         """
         total_size = int(self.time / self.time_step)
         res = np.zeros([self.particles, total_size + 1, 4])
+        flux = np.sum(self.mass_flux[0, :, :, :], 2).reshape(self.model_size[1] * self.model_size[2])
         for i in range(self.particles):
-            res[i, :, :] = self.simulate_paths()
-            logging.debug("Particle ID = " + str(i) + ", Final position = " + str(res[i, -1, :]))
+            index = Tools.Tools.generate_randi_from_list(flux)
+            res[i, :, :] = self.simulate_paths([0, index / self.model_size[1], index % self.model_size[2]])
+            logging.debug("Particle ID = " + str(i) + ", Start position = " + \
+                          str([0, index / self.model_size[1], index % self.model_size[2]]) + \
+                          ", Final position = " + str(res[i, -1, :]))
         with open("../data/" + self.file_name + "_paths.txt", "w") as f:
             for i in range(self.particles):
                 for j in range(total_size + 1):
@@ -196,12 +209,12 @@ class DispersionSolver(object):
             else:
                 return np.add(pos, np.multiply(float(self.time) / float(add_time), rp))
 
-    def simulate_paths(self):
+    def simulate_paths(self, start_pos):
         """
         模拟一个粒子随时间前进的过程
         :return:
         """
-        pos = np.array([0, self.model_size[1] / 2, self.model_size[2] / 2])
+        pos = start_pos
         total_size = int(self.time / self.time_step)
         paths = np.zeros([total_size + 1, 4])
 
@@ -233,5 +246,5 @@ class DispersionSolver(object):
 
 
 if __name__ == '__main__':
-    ds = DispersionSolver('../data/seepage_uniform300_status_final1.obj')
+    ds = DispersionSolver()
     res = ds.start_path_simulation()

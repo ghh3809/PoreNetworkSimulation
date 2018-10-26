@@ -1,5 +1,7 @@
 ## PoreNetworkSimulation
 
+:cn:[中文README请点击这里](https://github.com/ghh3809/PoreNetworkSimulation/blob/master/README_CH.md):cn:
+
 ### Update Log
 
 V1.0.0

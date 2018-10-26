@@ -1,86 +1,192 @@
 ## PoreNetworkSimulation
 
-### 1. 简介
+### Update Log
 
-本工程主要解决的问题：采用**等效孔隙网络模型**，对多孔介质中的气体运移现象进行计算。下面是对等效孔隙网络模型的介绍：
 
-```
-等效孔隙网络是一种岩土介质的孔隙结构模型，它将不同大小的孔隙固定在空间的格点上，孔隙之间通过喉道进行连接。通过设置不同的孔隙大小、不同的喉道连接数以及喉道的尺寸，可以反映不同结构的岩土介质。
-```
 
-工程由Matlab迁移到Python，并进行了部分重构工作。
+### 1. Introduction
 
-### 2. 特点
-
-**1. 参数化网络生成**
-
-利用孔隙半径、喉道半径、喉道曲率、配位数等参数，对等效孔隙网络进行全方面的描述，从而获得特定的参数化网络。
-
-**2. 随机构建**
-
-在配置参数时，对每一项参数都可以附带一定的随机性，使得网络结构更加符合真实结构。
-
-**3. 任务与数据分离**
-
-分离出网络状态与求解器，从而使得任务与数据相分离，使得计算状态恢复更加方便，也为之后的多线程或分布式计算提供基础。
-
-**4. 迭代算法改进**
-
-从时间模拟迭代转化为J法/GS法进行迭代，无需确定迭代时间参数，同时使结果更容易收敛，并加速了收敛速度。
-
-**5. 配置文件化**
-
-使用专门的配置文件对求解进行配置，免去了需要阅读源码的情形，更加方便易用。
-
-**6. 连接以概率呈现**
-
-针对如页岩等低配位数的多孔介质，使得连接以概率形式呈现，保证配位数满足要求的同时，增加了计算时的稳定性。
-
-**7. 单元半径计算方式更新**
-
-从原有的通过多次模拟计算单元半径，更新为单纯依靠解方程解决，在网络结构较大时提升明显。
-
-### 3. 工程结构
+The main problem to solve in this project is: to simulate the gas transportation in porous media according to **Effective Pore Network Model**.
 
 ```
-PoreNetworkSimulation                ── 工程目录
+The effective pore network is a model to describe soil media. It consists of grid-arranged pores to represent pores in real media, and pore throat to connect pores with each other. Differents parameters like pore size, throat size and coordination number can stand for the soil media accordingly.
+```
+
+This project is transferred and reconstructed from Matlab to Python.
+
+### 2. Feature
+
+**1. parameterization network**
+
+This project describes the effective pore network according to parameters like pore size, throat size, throat curvature, coordination number etc., and the specific parameterization network is generated.
+
+**2. Randomly construction**
+
+Each parameter will acquire randomness due to the deviation in settings, and various network can be constructed.
+
+**3. Seperating task and data**
+
+Seperate network status and solver from each other, which will bring convinience for recovery of calculation status, and provide basis for multi-thread and distributed calculation.
+
+**4. Improvement of iteration**
+
+Add Jacobi / Gauss-Sedial iteration apart from time step iteration. Without providing time step parameters, the newly added iteration method will converge easier and faster.
+
+**5.Using config file**
+
+Set the parameters in specific config file, rather than change in code.
+
+### 3. Project Structure
+
+```
+PoreNetworkSimulation                     ── Project Directory
 │
-├─ src                               ── 源码包
+├─ src                                    ── Source Code
 │  │
-│  ├─ config                         ── 配置
-│  │  ├─ config.ini.sample           ── 配置文件示例
-│  │  └─ config.ini                  ── 配置文件
+│  ├─ config                              ── Config
+│  │  ├─ config.ini.sample                ── Config Sample
+│  │  └─ config.ini                       ── Your Config File
 │  │
-│  ├─ data                           ── 数据
-│  │  ├─ seepage_<name>_cache.obj    ── 计算缓存文件
-│  │  └─ seepage_<name>_status.obj   ── 网络状态文件
+│  ├─ data                                ── Data
+│  │  ├─ seepage_<name>_cache.obj         ── Data of Seepage Caching
+│  │  ├─ seepage_<name>_status.obj        ── Data of Network Status
+│  │  ├─ dispersion_<name>_massflux.obj   ── Data of Mass Flux
+│  │  ├─ dispersion_<name>_velocity.obj   ── Data of Velocity
+│  │  └─ dispersion_<name>_paths.txt      ── Data of Dispersion Paths
 │  │
-│  ├─ log                            ── 日志
-│  │  └─ seepage_<name>.log          ── 日志文件
+│  ├─ log                                 ── Log
+│  │  ├─ seepage_<name>.log               ── Seepage Simulation Log
+│  │  └─ dispersion_<name>_massflux.obj   ── Dispersion Simulation Log
 │  │
-│  ├─ entity                         ── 实体
-│  │  ├─ GasConstant.py              ── 气体状态类
-│  │  ├─ NetworkStatus.py            ── 网络状态类
-│  │  ├─ NetworkStructure.py         ── 网络结构类
-│  │  ├─ Simulator.py                ── 求解器类
-│  │  └─ StatusCache.py              ── 计算缓存类
+│  ├─ entity                              ── Entity
+│  │  ├─ GasConstant.py                   ── Gas Parameters Class
+│  │  ├─ NetworkStatus.py                 ── Network Status Class
+│  │  ├─ NetworkStructure.py              ── Network Structure Class
+│  │  ├─ Simulator.py                     ── Simulator Class
+│  │  └─ StatusCache.py                   ── Status Cache Class
 │  │
-│  ├─ model                          ── 模型
-│  │  ├─ CalculatePermeability.py    ── 计算渗透率模型
-│  │  └─ Dispersion.py               ── 模拟机械弥散模型
+│  ├─ model                               ── Simulation Model
+│  │  ├─ CalculatePermeability.py         ── Seepage Simulation Model
+│  │  └─ Dispersion.py                    ── Dispersion Simulation Model
 │  │
-│  └─ utils                          ── 常用
-│     └─ Tools.py                    ── 通用工具类
+│  └─ utils                               ── Utilization
+│     └─ Tools.py                         ── Tools Class
 │
-├─ .idea                             ── 工程配置
+├─ .idea                                  ── Project Config
 │
-└─ requirements.txt                  ── 工程依赖
+└─ requirements.txt                       ── Project Requirements
 ```
 
-### 4. 运行方式
+### 4. Model Introduction
 
-0. 安装python2.7环境，并在进入工程目录后，使用`pip install -r requirements.txt`命令安装依赖库；
+#### 4.1 Permeability Simulation Model
 
-1. 进入src/config目录下，设置config.ini文件为计算所需要的参数；
+This model is created to simulate stable flow in peameability test (two opposite boundary is fixed pressure).
 
-2. 进入src/model目录下，运行`python CalculatePermeability.py`或者`python Dispersion.py`即可。
+Input:
+
+1. network parameters (config: `[network]`)
+2. gas parameters (config: `[gas]`)
+3. boundary condition and initial condition (config: `[status]`)
+4. solver type and settings (config: `[solver]`)
+5. iteration setting and finish condition (config: `[iteration]`)
+6. (optional) intermediate result (if you want to recover)
+
+Output:
+
+1. Peameability result (if you set `iteration.showPermeability` > 0)
+2. Network pressure status (save in `src/data/seepage_<name>_status.obj`)
+
+Structure of `src/data/seepage_<name>_status.obj`:
+
+```
+seepage_<name>_status.obj         ── (object)          Network Status
+├─ sc                             ── (object)          Network Status Config
+│  ├─ boundary_type               ── (array[6])        Boundary Type
+│  ├─ boundary_value              ── (array[6])        Boundary Value
+│  ├─ initial_type                ── (int)             Initial Type
+│  └─ initial_value               ── (array[6])        Initial Value
+├─ ns                             ── (object)          Network Structure
+│  ├─ nc                          ── (object)          Network Structure Config
+│  │  ├─ model_size               ── (array[3])        Model Size
+│  │  ├─ character_length         ── (float)           Character Length
+│  │  ├─ radius_params            ── (array[2])        Radius Size Ave & Std
+│  │  ├─ curvature                ── (float)           Throat Curvature
+│  │  ├─ throat_params            ── (array[2])        Throat Size Ave & Std
+│  │  ├─ coor_params              ── (array[2])        Coordination Number Size Ave & Std
+│  │  ├─ porosity                 ── (float)           Porosity
+│  │  └─ anisotropy               ── (array[3])        Anisotropy
+│  ├─ model_size                  ── (array[3])        Model Size
+│  ├─ character_length            ── (float)           Character Length
+│  ├─ radii                       ── (array[x,y,z])    Pore Radii
+│  ├─ throatR                     ── (array[x,y,z,26]) Throat Radii
+│  ├─ weight                      ── (array[x,y,z,26]) Throat Weight
+│  └─ unit_size                   ── (float)           Unit Size
+├─ gc                             ── (object)          Gas parameters
+│  ├─ M                           ── (float)           Molar Mass
+│  ├─ R                           ── (float)           Ideal Gas Constant
+│  ├─ T                           ── (float)           Temperature
+│  └─ u                           ── (float)           Viscosity
+├─ model_size                     ── (array[3])        Model Size
+└─ pressure                       ── (array[x,y,z])    Pore Pressure
+```
+
+#### 4.2 Dispersion Simulation Model
+
+This model is created to calculate dispersion in network according to simulate each particles random movement. It will produce the paths for each particles.
+
+Input: 
+
+1. dispersion parameters (config: `[dispersion]`)
+2. network status calculted by 4.1. (`src/data/seepage_<name>_status.obj`)
+
+Output:
+
+1. Particles position in each time step (save in `src/data/dispersion_<name>_paths.txt`).
+
+Structure of `src/data/dispersion_<name>_paths.txt`:
+
+Linear store of paths (array[particles, total-time-steps, 4]). So it is arranged by:
+
+```
+particle1_time1
+particle1_x1
+particle1_y1
+particle1_z1
+particle1_time2
+particle1_x2
+particle1_y2
+particle1_z2
+...
+particle2_time1
+particle2_x1
+particle2_y1
+particle2_z1
+...
+```
+
+Use `reshape(path-data, particles, total-time-steps, 4)` will be useful when analyzing.
+
+### 5. Running
+
+#### 5.1 Environment Requirement
+
+This project runs under Python 2.7.
+
+1. Install [Python 2.7](https://www.python.org/) from official website.
+2. Remember to add your python into PATH.
+3. Enter the project directory. Use `pip install -r requirements.txt` to install project requirements.
+
+#### 5.2 Run Permeability Simulation
+
+1. Switch to directory `src/config`, set parameters for simulation in file `config.ini`.
+2. Switch to directory `src/model`, run file `CalculatePermeability.py` or use command `python -u CalculatePermeability.py`.
+3. The running log will show in screen and store in directory `src/log/seepage_<name>.log`. If you choose to save intermediate results in config file, the data will temperately store in `src/data/seepage_<name>_status_<step>.obj`.
+4. When the pressure change in one step is less than your setting, the program will stop, and network status data will store in `src/data/seepage_<name>_status.obj`.
+
+#### 5.3 Run Dispersion Simulation
+
+1. Switch to directory `src/config`, set parameters for simulation in file `config.ini`.
+2. Switch to directory `src/model`, run file `Dispersion.py` or use command `python -u Dispersion.py`.
+3. The running log will show in screen and store in directory `src/log/dispersion_<name>.log`.
+4. The final path result will store in `src/data/dispersion_<name>_paths.txt`.

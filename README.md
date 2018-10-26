@@ -2,7 +2,10 @@
 
 ### Update Log
 
+V1.0.0
 
+1. Basic pore-network model seepage simulation and dispersion simulation.
+2. Change calculation of unit size from multi-attemption method to equation-solving method, and accelerate the construction speed.
 
 ### 1. Introduction
 

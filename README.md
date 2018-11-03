@@ -115,6 +115,7 @@ seepage_<name>_status.obj         ── (object)          Network Status
 │  ├─ nc                          ── (object)          Network Structure Config
 │  │  ├─ model_size               ── (array[3])        Model Size
 │  │  ├─ character_length         ── (float)           Character Length
+│  │  ├─ unit_size                ── (float)           Unit Size
 │  │  ├─ radius_params            ── (array[2])        Radius Size Ave & Std
 │  │  ├─ curvature                ── (float)           Throat Curvature
 │  │  ├─ throat_params            ── (array[2])        Throat Size Ave & Std
@@ -126,7 +127,8 @@ seepage_<name>_status.obj         ── (object)          Network Status
 │  ├─ radii                       ── (array[x,y,z])    Pore Radii
 │  ├─ throatR                     ── (array[x,y,z,26]) Throat Radii
 │  ├─ weight                      ── (array[x,y,z,26]) Throat Weight
-│  └─ unit_size                   ── (float)           Unit Size
+│  ├─ unit_size                   ── (float)           Unit Size
+│  └─ porosity                    ── (float)           True Porosity
 ├─ gc                             ── (object)          Gas parameters
 │  ├─ M                           ── (float)           Molar Mass
 │  ├─ R                           ── (float)           Ideal Gas Constant
@@ -195,3 +197,15 @@ This project runs under Python 2.7.
 2. Switch to directory `src/model`, run file `Dispersion.py` or use command `python -u Dispersion.py`.
 3. The running log will show in screen and store in directory `src/log/dispersion_<name>.log`.
 4. The final path result will store in `src/data/dispersion_<name>_paths.txt`.
+
+### 6. Special Remind
+
+#### 6.1 Save in Permeability Simulation
+
+When running permeability simulation, you can choose to save the intermediate and final result, and it is mainly for recover from stop or continue the unfinished calculation. However, there will be a situation like this:
+
+When you run permeability simulation, if you set the parameter `iteration.save != 0`, there will be intermediate results and final results saved in directory. And when you run the program at the second time, the program will automatically find the data file like pattern `src/data/seepage_<name>_status.obj`. As the result, your network will rebuild from the existing file (the same as the earlier one), and the simulation will continue. So if you want to build a new network and restart the simulation, please choose the following tips:
+
+1. Delete the file `src/data/seepage_<name>_status.obj`
+2. Change your file name `iteration.fileName`
+3. Set parameter `iteration.save = 0` when first simulation, and it will not save any result.

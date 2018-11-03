@@ -113,6 +113,7 @@ seepage_<name>_status.obj         ── (object)          网络状态
 │  ├─ nc                          ── (object)          网络结构配置
 │  │  ├─ model_size               ── (array[3])        模型尺寸
 │  │  ├─ character_length         ── (float)           特征尺寸
+│  │  ├─ unit_size                ── (float)           单元尺寸
 │  │  ├─ radius_params            ── (array[2])        孔隙半径均值&标准差
 │  │  ├─ curvature                ── (float)           喉道曲率
 │  │  ├─ throat_params            ── (array[2])        喉道半径均值&标准差
@@ -124,7 +125,8 @@ seepage_<name>_status.obj         ── (object)          网络状态
 │  ├─ radii                       ── (array[x,y,z])    孔隙半径
 │  ├─ throatR                     ── (array[x,y,z,26]) 喉道半径
 │  ├─ weight                      ── (array[x,y,z,26]) 喉道权重
-│  └─ unit_size                   ── (float)           单元尺寸
+│  ├─ unit_size                   ── (float)           单元尺寸
+│  └─ porosity                    ── (float)           网络最终孔隙率
 ├─ gc                             ── (object)          气体参数
 │  ├─ M                           ── (float)           摩尔质量
 │  ├─ R                           ── (float)           理想气体常数
@@ -191,3 +193,15 @@ seepage_<name>_status.obj         ── (object)          网络状态
 2. 切换到目录`src/model`，运行`Dispersion.py`或使用命令`python -u Dispersion.py`。
 3. 运行日志将会输出在屏幕上，并保存在`src/log/dispersion_<name>.log`。
 4. 程序终止时，结果将存储在`src/data/dispersion_<name>_paths.txt`下。
+
+### 6. 特别提醒
+
+#### 6.1 渗透率模拟过程中的保存
+
+渗透率模拟过程中，可以选择保存中间及最终结果，这个选项的本质是为了从中断或异常中恢复，或者继续未完成的模拟。但在运行时，也可能发生下面的情况：
+
+运行渗透率模拟模型时，如果设置了参数`iteration.save != 0`，计算过程中将会保存中间结果与最终结果。而当你再次运行程序时，程序将自动寻找类似`src/data/seepage_<name>_status.obj`的数据文件，并从文件中重建孔隙网络（与之前完全相同），同时渗透率模拟将从上次结束位置继续执行。因此如果想要构建新的网络并重启模拟过程，可以选择以下方法之一：
+
+1. 删除数据文件`src/data/seepage_<name>_status.obj`
+2. 更换配置中的文件名`iteration.fileName`
+3. 在首次运行时，设置`iteration.save = 0`，这将不保存任何中间及最终结果

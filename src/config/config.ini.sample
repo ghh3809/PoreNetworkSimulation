@@ -6,11 +6,13 @@
 modelSize: 10, 10, 10
 # 特征尺度(m)
 characterLength: 1E-9
-# 孔隙半径参数：均值,标准差(lc)
+# (与radiusParams二选一，都存在时优先使用unitSize)单元尺寸(单位：lc)
+# unitSize: 1500
+# (与unitSize二选一，都存在时优先使用unitSize)孔隙半径参数：均值,标准差(单位：lc)
 radiusParams: 100, 10
-# (与radiusParams二选一，都存在时优先使用curvature)孔喉半径参数：均值,标准差(lc)
+# (与radiusParams二选一，都存在时优先使用curvature)孔喉弯曲度
 curvature: 1
-# (与curvature二选一，都存在时优先使用curvature)孔喉弯曲度
+# (与curvature二选一，都存在时优先使用curvature)孔喉半径参数：均值,标准差(lc)
 # throatParams: 65, 10
 # 配位数参数：均值,标准差
 coorParams: 5, 1

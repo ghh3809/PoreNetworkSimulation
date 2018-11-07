@@ -4,9 +4,9 @@
 # Copyright (c) 2018 Tsinghua Institute of Geo-Environment. All Rights Reserved #
 #################################################################################
 """
-File: GasConstant.py
-Date: 2018/08/28 21:32:53
-Desc: 气体常数类
+File: FluidConstant.py
+Date: 2018/11/07 19:12:08
+Desc: 流体常数类
 """
 
 import os
@@ -14,7 +14,7 @@ import logging
 import configparser
 
 
-class GasConstant(object):
+class FluidConstant(object):
     """
     网络配置文件处理类
     """
@@ -24,32 +24,22 @@ class GasConstant(object):
         :param config_file: 配置文件，默认位置'../config/config.ini'
         """
         if not os.path.exists(config_file):
-            logging.error("No gas config file detected!")
-            raise Exception("No gas config file detected!")
+            logging.error("No fluid config file detected!")
+            raise Exception("No fluid config file detected!")
         conf = configparser.ConfigParser()
         conf.read(config_file, encoding='utf-8-sig')
 
         # 读取具体配置
         try:
             # self.exist
-            self.exist = int(conf.get("gas", "exist"))
+            self.exist = int(conf.get("fluid", "exist"))
             if self.exist != 0:
                 self.exist = 1
 
-            # self.M
-            self.M = float(conf.get("gas", "M"))
-            if self.M <= 0:
-                raise Exception("param gas.M should be positive!")
-
-            # self.R
-            self.R = float(conf.get("gas", "R"))
-            if self.R <= 0:
-                raise Exception("param gas.R should be positive!")
-
-            # self.T
-            self.T = float(conf.get("gas", "T"))
-            if self.T <= 0:
-                raise Exception("param gas.T should be positive!")
+            # self.rou
+            self.rou = float(conf.get("fluid", "rou"))
+            if self.rou <= 0:
+                raise Exception("param fluid.rou should be positive!")
 
             # self.u
             self.u = float(conf.get("gas", "u"))
@@ -68,12 +58,10 @@ class GasConstant(object):
         :return:
         """
         if self.exist != 0:
-            logging.info("------------------读取气体参数配置文件------------------")
-            logging.info("摩尔质量M(kg/mol): " + str(self.M))
-            logging.info("气体常数R(m^3·Pa/(K·mol)): " + str(self.R))
-            logging.info("温度T(K): " + str(self.T))
+            logging.info("------------------读取流体参数配置文件------------------")
+            logging.info("密度ρ(kg/m^3): " + str(self.rou))
             logging.info("粘度u(Pa·s): " + str(self.u))
 
 
 if __name__ == '__main__':
-    gas_constant = GasConstant()
+    fluid_constant = FluidConstant()

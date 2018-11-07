@@ -19,6 +19,7 @@ from utils import Tools
 from NetworkStructure import NetworkStructureHandler
 from NetworkStructure import NetworkStructure
 from GasConstant import GasConstant
+from FluidConstant import FluidConstant
 
 
 class NetworkStatusHandler(object):
@@ -103,7 +104,7 @@ class NetworkStatusHandler(object):
         if self.initial_type == 0:
             logging.info("常数压力P = " + str(self.initial_value) + " Pa")
         else:
-            logging.info("线性变化:")
+            logging.info("逐渐变化:")
             if self.initial_value[0] + self.initial_value[1] > 0:
                 logging.info("-x侧: 压力P = " + str(self.initial_value[0]) + " Pa")
                 logging.info("    ||    ||    ||    ||")
@@ -125,16 +126,18 @@ class NetworkStatus(object):
     """
     网络结构基本类
     """
-    def __init__(self, status_config, network_structure, gas_constant):
+    def __init__(self, status_config, network_structure, gas_constant, fluid_constant):
         """
         利用配置创建网络结构
         :param status_config: 配置实例
         :param network_structure: 网络结构
         :param gas_constant: 气体参数
+        :param fluid_constant: 流体参数，当气体参数
         """
         self.sc = status_config
         self.ns = network_structure
         self.gc = gas_constant
+        self.fc = fluid_constant
         self.model_size = self.ns.model_size
         self.pressure = None
         self.initialize_pressure()
@@ -207,7 +210,8 @@ class NetworkStatus(object):
                             self.pressure[i, j, k] = layer_pressure[j]
                         else:
                             self.pressure[i, j, k] = layer_pressure[k]
-        logging.info("初始化压力结果：")
+        logging.info("初始化压力完成")
+        logging.debug("初始化压力结果：")
         ave_pressure = np.average(np.average(self.pressure, 2), 1)
         print_str = "    ["
         for p in ave_pressure:
@@ -215,24 +219,24 @@ class NetworkStatus(object):
         print_str += "]"
         logging.debug(print_str)
 
-    def get_kn(self, status_cache):
-        """
-        获取当前的knudsen number
-        :param status_cache: 计算缓存
-        :return:
-        """
-        return np.average(np.divide(np.average(status_cache.kn_cache, 3), self.pressure)[1:-1, 1:-1, 1:-1])
-
-    def get_mass_flux(self, status_cache, scale_effect):
+    def get_mass_flux(self, status_cache, scale_effect, show_status):
         """
         获取当前状态的质量流量
         :param status_cache: 计算缓存
         :param scale_effect: 是否考虑尺度效应
+        :param show_status: 是否显示计算过程
         :return: mass_flux, velocity
         """
+        # 当计算流体时，不考虑尺度效应
+        if self.fc.exist != 0:
+            scale_effect = 0
+
+        # 计算质量流量
         c = 1.0
+        volumn_flux = np.zeros(self.model_size + [26])
         delta_pv = np.zeros(self.model_size + [26])
         velocity = np.zeros(self.model_size + [26])
+
         for i in range(self.model_size[0]):
             for j in range(self.model_size[1]):
                 for k in range(self.model_size[2]):
@@ -256,10 +260,19 @@ class NetworkStatus(object):
                                 delta_pv[indt] = status_cache.darcy_cache[indt] * p_ave * \
                                                  (self.pressure[ind1] - self.pressure[ind2]) * \
                                                  status_cache.length_cache[indt] * self.ns.weight[indt]
-                            velocity[indt] = delta_pv[indt] / p_ave / np.pi / \
+                            volumn_flux[indt] = delta_pv[indt] / p_ave
+                            velocity[indt] = volumn_flux[indt] / np.pi / \
                                 np.square(self.ns.throatR[indt] * self.ns.character_length)
-            logging.debug("    计算流量中，当前进度 = " + format(float(i) / float(self.model_size[0]) * 100.0, '.2f') + "%")
-        return delta_pv * (self.gc.M / (self.gc.R * self.gc.T)), velocity
+
+            # 显示计算进度
+            for i in range(int(float(show_status) * float(i - 1) / float(self.model_size[0])),
+                           int(float(show_status) * float(i) / float(self.model_size[0]))):
+                sys.stdout.write("█")
+
+        if self.fc.exist != 0:
+            return volumn_flux * self.fc.rou, velocity
+        if self.gc.exist != 0:
+            return delta_pv * (self.gc.M / (self.gc.R * self.gc.T)), velocity
 
     def get_permeability(self, status_cache, scale_effect):
         """
@@ -268,13 +281,131 @@ class NetworkStatus(object):
         :param scale_effect: 尺度效应
         :return:
         """
-        perm_coef = np.abs(2 * self.gc.u * (self.model_size[0] - 1) * self.gc.R * self.gc.T /
-                           (self.ns.character_length * self.ns.unit_size * self.gc.M *
-                            (self.sc.boundary_value[0] ** 2 - self.sc.boundary_value[1] ** 2))) / \
-                        (1.0 - 1.0 / np.sqrt(self.model_size[1] * self.model_size[2]))
-        mass_flux, velocity = self.get_mass_flux(status_cache, scale_effect)
+
+        if self.fc.exist != 0:
+            rou = self.fc.rou
+        else:
+            rou = (self.sc.boundary_value[0] + self.sc.boundary_value[1]) * self.gc.M / (2 * self.gc.R * self.gc.T)
+
+        perm_coef = np.abs(self.gc.u * (self.model_size[0] - 1) /
+                           (self.ns.character_length * self.ns.unit_size * rou *
+                            (self.sc.boundary_value[0] - self.sc.boundary_value[1]))) / \
+                    (1.0 - 1.0 / np.sqrt(self.model_size[1] * self.model_size[2]))
+
+        mass_flux, velocity = self.get_mass_flux(status_cache, scale_effect, 0)
         ave_mass_flux = np.abs(np.average(np.sum(mass_flux, 3)[0, :, :]))
         return perm_coef * ave_mass_flux
+
+    def calculate_iteration(self, status_cache, time_step, scale_effect, show_status):
+        """
+        利用时间步迭代法计算一步迭代
+        :param status_cache: 状态缓存
+        :param time_step: 时间步长
+        :param scale_effect: 尺度效应
+        :param show_status: 是否显示求解过程
+        :return:
+        """
+        # 修正边界条件
+        if self.fc.exist != 0:
+            raise Exception("Cannot use time step iteration on fluid!")
+        for i in range(self.model_size[0]):
+            for j in range(self.model_size[1]):
+                for k in range(self.model_size[2]):
+                    if i == 0 and self.sc.boundary_type[0] == 1:
+                        self.pressure[i, j, k] = self.sc.boundary_value[0]
+                    elif i == self.model_size[0] - 1 and self.sc.boundary_type[1] == 1:
+                        self.pressure[i, j, k] = self.sc.boundary_value[1]
+                    elif j == 0 and self.sc.boundary_type[2] == 1:
+                        self.pressure[i, j, k] = self.sc.boundary_value[2]
+                    elif j == self.model_size[1] - 1 and self.sc.boundary_type[3] == 1:
+                        self.pressure[i, j, k] = self.sc.boundary_value[3]
+                    elif k == 0 and self.sc.boundary_type[4] == 1:
+                        self.pressure[i, j, k] = self.sc.boundary_value[4]
+                    elif k == self.model_size[2] - 1 and self.sc.boundary_type[5] == 1:
+                        self.pressure[i, j, k] = self.sc.boundary_value[5]
+
+        # 计算一个迭代步
+        mass_flux, velocity = self.get_mass_flux(status_cache, scale_effect, show_status)
+        delta_pressure = np.divide(np.sum(mass_flux, 3) / (self.gc.M / (self.gc.R * self.gc.T)) * time_step,
+                                   4.0 / 3.0 * np.pi * np.power(self.ns.radii * self.ns.character_length, 3.0))
+        self.pressure -= delta_pressure
+
+    def calculate_equation(self, status_cache, scale_effect, show_status, method):
+        """
+        利用J/GS迭代法计算一步迭代
+        :param status_cache: 状态缓存
+        :param scale_effect: 尺度效应
+        :param show_status: 是否显示求解过程
+        :param method: "J" / "GS"
+        :return:
+        """
+        # 当计算流体时，不考虑尺度效应
+        if self.fc.exist != 0:
+            scale_effect = 0
+
+        c = 1.0  # 常系数
+
+        # 迭代计算
+        if method == "J":
+            new_pressure = np.zeros(self.model_size)
+        elif method == "GS":
+            new_pressure = self.pressure
+        else:
+            raise Exception("Method can only be J or GS!")
+
+        for i in range(self.model_size[0]):
+            for j in range(self.model_size[1]):
+                for k in range(self.model_size[2]):
+                    if i == 0 and self.sc.boundary_type[0] == 1:
+                        new_pressure[i, j, k] = self.sc.boundary_value[0]
+                    elif i == self.model_size[0] - 1 and self.sc.boundary_type[1] == 1:
+                        new_pressure[i, j, k] = self.sc.boundary_value[1]
+                    elif j == 0 and self.sc.boundary_type[2] == 1:
+                        new_pressure[i, j, k] = self.sc.boundary_value[2]
+                    elif j == self.model_size[1] - 1 and self.sc.boundary_type[3] == 1:
+                        new_pressure[i, j, k] = self.sc.boundary_value[3]
+                    elif k == 0 and self.sc.boundary_type[4] == 1:
+                        new_pressure[i, j, k] = self.sc.boundary_value[4]
+                    elif k == self.model_size[2] - 1 and self.sc.boundary_type[5] == 1:
+                        new_pressure[i, j, k] = self.sc.boundary_value[5]
+                    else:
+                        sum_up = 0.0
+                        sum_down = 0.0
+                        ind1 = (i, j, k)
+                        for l in range(26):
+                            rp = Tools.Tools.get_relative_position(l)
+                            ind2 = tuple(np.add(rp, (i, j, k)))
+                            if (0 <= ind2[0] < self.model_size[0]) \
+                                    and (0 <= ind2[1] < self.model_size[1]) \
+                                    and (0 <= ind2[2] < self.model_size[2]):
+                                ind_t1 = tuple(ind1 + (l,))
+                                p_ave = (self.pressure[ind1] + self.pressure[ind2]) / 2.0
+                                if scale_effect:
+                                    ff = 1.0 + 4.0 * c * status_cache.kn_cache[ind_t1] / p_ave
+                                    f = 1.0 / (1.0 + 0.5 * status_cache.kn_cache[ind_t1] / p_ave)
+                                    coef = (f * ff * status_cache.darcy_cache[ind_t1] * p_ave +
+                                            (1.0 - f) * status_cache.knudsen_cache[ind_t1]) * \
+                                           status_cache.length_cache[ind_t1] * self.ns.weight[ind_t1]
+                                else:
+                                    if self.fc.exist != 0:
+                                        coef = status_cache.darcy_cache[ind_t1] * status_cache.length_cache[ind_t1] * \
+                                               self.ns.weight[ind_t1]
+                                    else:
+                                        coef = status_cache.darcy_cache[ind_t1] * p_ave * status_cache.length_cache[ind_t1] * \
+                                                self.ns.weight[ind_t1]
+                                sum_up += coef * self.pressure[ind2]
+                                sum_down += coef
+                        if sum_down != 0:
+                            new_pressure[i, j, k] = sum_up / sum_down
+
+            # 显示计算进度
+            for i in range(int(float(show_status) * float(i - 1) / float(self.model_size[0])),
+                           int(float(show_status) * float(i) / float(self.model_size[0]))):
+                sys.stdout.write("█")
+
+        # 更新矩阵
+        if method == "J":
+            self.pressure = new_pressure
 
     def __cal_layer_pressure(self, pressure1, pressure2, size):
         """
@@ -338,4 +469,5 @@ class NetworkStatus(object):
 if __name__ == '__main__':
     network_status = NetworkStatus(NetworkStatusHandler(),
                                    NetworkStructure(NetworkStructureHandler()),
-                                   GasConstant())
+                                   GasConstant(),
+                                   FluidConstant())

@@ -23,6 +23,7 @@ sys.path.append('../')
 
 from utils import Tools as Tools
 from entity import GasConstant as Gas
+from entity import FluidConstant as Fluid
 from entity import NetworkStructure as Structure
 from entity import NetworkStatus as Status
 from entity import Simulator as Simu
@@ -62,7 +63,7 @@ class SeepageIterator(object):
             # self.file_name
             self.file_name = "seepage_" + conf.get("iteration", "fileName")
             if logging_flag:
-                Tools.Tools.set_logging('../log/' + self.file_name + '.log')
+                Tools.Tools.set_logging('../log/' + self.file_name + '.log', output_level=logging.INFO)
 
             # self.maxDeltaP
             self.max_delta_p = float(conf.get("iteration", "maxDeltaP"))
@@ -93,8 +94,8 @@ class SeepageIterator(object):
         logging.info("保存结果: " + ("否" if self.save == 0 else ("每 " + str(self.save) + " 次迭代")))
         logging.info("文件名前缀: " + str(self.file_name))
         logging.info("迭代终止条件（满足任意一个即可）:")
-        logging.info("1. 单次迭代最大压力变化小于" + str(self.max_delta_p))
-        logging.info("2. 单次迭代平均压力变化小于" + str(self.ave_delta_p))
+        logging.info("1. 单次迭代最大压力变化小于" + str(self.max_delta_p) + " Pa")
+        logging.info("2. 单次迭代平均压力变化小于" + str(self.ave_delta_p) + " Pa")
 
     def start_simulation(self):
         """
@@ -134,28 +135,32 @@ class SeepageIterator(object):
                         status_file_name = "../data/" + file
 
         if status_file_name== "":
-            logging.info("网络状态文件不存在，即将重建网络！")
+            logging.info("***** [INFO] 网络状态文件不存在，即将重建网络！ *****")
             gas_constant = Gas.GasConstant()
+            fluid_constant = Fluid.FluidConstant()
+            if fluid_constant.exist != 0:
+                logging.info("***** [WARNING] 由于气体配置与流体配置均存在，以下计算以流体参数为准 *****")
             network_structure = Structure.NetworkStructure(Structure.NetworkStructureHandler())
-            network_status = Status.NetworkStatus(Status.NetworkStatusHandler(), network_structure, gas_constant)
+            network_status = Status.NetworkStatus(Status.NetworkStatusHandler(), network_structure, gas_constant, fluid_constant)
         else:
             logging.info("------------------初始化网络状态------------------")
-            logging.info("【重要】发现网络状态文件（3秒后继续）: " + str(status_file_name))
+            logging.info("***** [INFO] 发现网络状态文件（3秒后继续）: " + str(status_file_name) + " *****")
             time.sleep(3)
             logging.info("从文件重建网络状态中……")
             with open(status_file_name, 'r') as f:
                 network_status = cPickle.load(f)
             network_status.gc.print_config()
+            network_status.fc.print_config()
             network_status.ns.nc.print_config()
             network_status.sc.print_config()
 
         # 判断网络缓存是否存在
         cache_file_name = "../data/" + self.file_name + "_cache.obj"
         if status_file_name == "" or not os.path.exists(cache_file_name):
-            logging.info("网络缓存文件无效或不存在，即将重建缓存！")
+            logging.info("***** [INFO] 网络缓存文件无效或不存在，即将重建缓存！ *****")
             status_cache = Cache.StatusCache(network_status)
         else:
-            logging.info("【重要】发现网络缓存文件（3秒后继续）: " + str(cache_file_name))
+            logging.info("***** [INFO] 发现网络缓存文件（3秒后继续）: " + str(cache_file_name) + " *****")
             time.sleep(3)
             logging.info("从文件重建计算缓存中……")
             with open(cache_file_name, 'r') as f:
@@ -175,19 +180,10 @@ class SeepageIterator(object):
                 with open(cache_path, 'w') as f:
                     cPickle.dump(simulator.sc, f)
             else:
-                logging.info("缓存文件已存在，无法保存新的缓存文件!")
+                logging.info("***** [WARNING] 缓存文件已存在，无法重新保存！（如果确认是当前网络的缓存文件，请忽略该提示） *****")
+                time.sleep(3)
 
         return simulator
-
-    def print_initial_status(self):
-        """
-        输出初始状态
-        :return:
-        """
-        logging.info("------------------初始状态------------------")
-        logging.info("Kn = " + format(self.simulator.get_kn(), '.4f'))
-        if self.show_permeability > 0:
-            logging.info("Kperm =" + format(self.simulator.get_permeability(), '.4e') + " m^2")
 
     def iterate_and_create_output_str(self):
         """
@@ -197,6 +193,7 @@ class SeepageIterator(object):
         # 迭代计算
         last_p = self.simulator.ns.pressure.copy()
         self.simulator.iterate_once()
+        # print np.average(np.average(self.simulator.ns.pressure, 2), 1)
         ave_delta_p = np.average(np.abs(self.simulator.ns.pressure - last_p))
         max_delta_p = np.max(np.abs(self.simulator.ns.pressure - last_p))
         final_perm = 0

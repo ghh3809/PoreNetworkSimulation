@@ -52,15 +52,20 @@ class StatusCache(object):
                                 and (0 <= ind2[2] < network_status.model_size[2]):
                             throat_r = network_status.ns.throatR[i, j, k, l] * network_status.ns.character_length
                             length = np.sqrt(np.sum(np.square(rp))) * network_status.ns.unit_size
-                            self.darcy_cache[i, j, k, l] = np.pi * np.power(throat_r, 4) / 8.0 / network_status.gc.u
+
                             self.length_cache[i, j, k, l] = 1.0 / (length - network_status.ns.radii[ind1] -
                                                                    network_status.ns.radii[ind2]) / \
-                                network_status.ns.character_length
-                            self.kn_cache[i, j, k, l] = np.sqrt(np.pi * network_status.gc.R * network_status.gc.T / 2.0
-                                                                / network_status.gc.M) * network_status.gc.u / throat_r
-                            self.knudsen_cache[i, j, k, l] = 2 * np.pi * np.power(throat_r, 3) / 3.0 * \
-                                np.sqrt(8 * network_status.gc.R * network_status.gc.T /
-                                        np.pi / network_status.gc.M)
+                                                            network_status.ns.character_length
+                            if network_status.fc.exist != 0:
+                                self.darcy_cache[i, j, k, l] = np.pi * np.power(throat_r, 4) / 8.0 / network_status.fc.u
+                            else:
+                                self.darcy_cache[i, j, k, l] = np.pi * np.power(throat_r, 4) / 8.0 / network_status.gc.u
+                                self.kn_cache[i, j, k, l] = np.sqrt(np.pi * network_status.gc.R * network_status.gc.T / 2.0
+                                                                    / network_status.gc.M) * network_status.gc.u / throat_r
+                                self.knudsen_cache[i, j, k, l] = 2 * np.pi * np.power(throat_r, 3) / 3.0 * \
+                                    np.sqrt(8 * network_status.gc.R * network_status.gc.T /
+                                            np.pi / network_status.gc.M)
+
                             self.darcy_cache[ind2[0], ind2[1], ind2[2], 25-l] = self.darcy_cache[i, j, k, l]
                             self.length_cache[ind2[0], ind2[1], ind2[2], 25-l] = self.length_cache[i, j, k, l]
                             self.kn_cache[ind2[0], ind2[1], ind2[2], 25-l] = self.kn_cache[i, j, k, l]

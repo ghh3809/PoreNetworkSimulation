@@ -178,12 +178,12 @@ class NetworkStructure(object):
 
         if self.nc.unit_size == 0:
             logging.info("计算单元尺寸……")
-            self.unit_size = self.calculate_unit_size()
+            self.unit_size = self.__calculate_unit_size()
             logging.info("    单元尺寸(lc): " + format(self.unit_size, '.4f'))
         else:
             self.unit_size = self.nc.unit_size
             logging.info("计算设定孔隙尺寸……")
-            self.nc.radius_params = self.calculate_pore_size()
+            self.nc.radius_params = self.__calculate_pore_size()
             logging.info("    设定孔隙尺寸(lc): " + format(self.nc.radius_params[0], '.4f'))
 
         logging.info("初始化孔隙尺寸……")
@@ -192,7 +192,7 @@ class NetworkStructure(object):
 
         logging.info("初始化喉道尺寸……")
         if self.nc.curvature:
-            self.throatR = self.create_throat_from_curvature(self.nc.curvature, self.unit_size)
+            self.throatR = self.__create_throat_from_curvature(self.nc.curvature, self.unit_size)
         else:
             self.throatR = Tools.Tools.create_normal_dist(self.nc.throat_params[0], self.nc.throat_params[1],
                                                           self.model_size + [26])
@@ -200,15 +200,15 @@ class NetworkStructure(object):
 
         logging.info("初始化连接矩阵……")
         target_coor = Tools.Tools.create_normal_dist(self.nc.coor_params[0], self.nc.coor_params[1], self.model_size)
-        self.weight = self.create_weight_data(target_coor)
+        self.weight = self.__create_weight_data(target_coor)
         logging.info("    平均配位数: " + format(np.average(np.sum(self.weight[1:-1, 1:-1, 1:-1, :], 3)), '.4f'))
         logging.info("    平均权重: " + format(np.average(self.weight[1:-1, 1:-1, 1:-1, :]), '.4f'))
 
         logging.info("计算网络最终孔隙率……")
-        self.porosity = self.calculate_final_porosity()
+        self.porosity = self.__calculate_final_porosity()
         logging.info("    孔隙率: " + format(self.porosity, '.4f'))
 
-    def calculate_unit_size(self):
+    def __calculate_unit_size(self):
         """
         迭代法计算单元尺寸
         :return:
@@ -227,7 +227,7 @@ class NetworkStructure(object):
             if self.nc.curvature:
                 # 使用统计结论：在合理范围内，取r=μ-0.3σ得到的结果较准
                 eff_r = self.nc.radius_params[0] - 0.3 * self.nc.radius_params[1]
-                ave_sqr = np.square(self.cal_throat_radius(eff_r, eff_r, unit_size, self.nc.curvature))
+                ave_sqr = np.square(self.__cal_throat_radius(eff_r, eff_r, unit_size, self.nc.curvature))
             else:
                 # E(X^2) = (E(X))^2 + D(X)
                 ave_sqr = np.square(self.nc.throat_params[0]) + np.square(self.nc.throat_params[1])
@@ -240,7 +240,7 @@ class NetworkStructure(object):
                 hi = unit_size
         return unit_size
 
-    def calculate_pore_size(self):
+    def __calculate_pore_size(self):
         """
         迭代法计算孔隙尺寸
         :return:
@@ -259,7 +259,7 @@ class NetworkStructure(object):
             if self.nc.curvature:
                 # 使用统计结论：在合理范围内，取r=μ-0.3σ得到的结果较准
                 eff_r = (1 - 0.3 * var_ratio) * pore_radius
-                ave_sqr = np.square(self.cal_throat_radius(eff_r, eff_r, self.unit_size, self.nc.curvature))
+                ave_sqr = np.square(self.__cal_throat_radius(eff_r, eff_r, self.unit_size, self.nc.curvature))
             else:
                 # E(X^2) = (E(X))^2 + D(X)
                 ave_sqr = np.square(self.nc.throat_params[0]) + np.square(self.nc.throat_params[1])
@@ -272,7 +272,7 @@ class NetworkStructure(object):
                 lo = pore_radius
         return [pore_radius, var_ratio * pore_radius]
 
-    def calculate_final_porosity(self):
+    def __calculate_final_porosity(self):
         """
         计算网络最终孔隙率
         :return:
@@ -292,7 +292,7 @@ class NetworkStructure(object):
         throat_volumn /= 2 * (self.model_size[0] - 2) * (self.model_size[1] - 2) * (self.model_size[2] - 2)
         return (pore_volumn + throat_volumn) / (self.unit_size ** 3)
 
-    def create_throat_from_curvature(self, curv, unit_size):
+    def __create_throat_from_curvature(self, curv, unit_size):
         """
         通过曲率数据创建喉道
         :param curv: 曲率
@@ -313,13 +313,13 @@ class NetworkStructure(object):
                             r1 = self.radii[ind1]
                             r2 = self.radii[ind2]
                             ll = np.sqrt(np.sum(np.square(rp))) * unit_size
-                            throats[i, j, k, l] = self.cal_throat_radius(r1, r2, ll, curv)
+                            throats[i, j, k, l] = self.__cal_throat_radius(r1, r2, ll, curv)
                             throats[ind2[0], ind2[1], ind2[2], 25-l] = throats[i, j, k, l]
             logging.debug("    计算喉道尺寸中，当前进度 = " + format(float(i) /
                           float(self.model_size[0]) * 100.0, '.2f') + "%")
         return throats
 
-    def create_weight_data(self, target_coor):
+    def __create_weight_data(self, target_coor):
         """
         创建权重数组
         :param target_coor: 目标权重
@@ -336,15 +336,15 @@ class NetworkStructure(object):
                         if (0 <= ind2[0] < self.model_size[0]) \
                                 and (0 <= ind2[1] < self.model_size[1]) \
                                 and (0 <= ind2[2] < self.model_size[2]):
-                            weight[i, j, k, l] = self.get_weight(target_coor[ind1], target_coor[ind2],
+                            weight[i, j, k, l] = self.__get_weight(target_coor[ind1], target_coor[ind2],
                                                                  self.nc.coor_params[0], self.nc.anisotropy, rp)
                             weight[ind2[0], ind2[1], ind2[2], 25-l] = weight[i, j, k, l]
             logging.debug("    计算权重中，当前进度 = " + format(float(i) /
                           float(self.model_size[0]) * 100.0, '.2f') + "%")
-        return self.remove_isolated_throats(weight)
+        return self.__remove_isolated_throats(weight)
 
     @staticmethod
-    def remove_isolated_throats(weight):
+    def __remove_isolated_throats(weight):
         """
         根据权重，去除孤立喉道
         :param weight: 权重矩阵
@@ -407,21 +407,10 @@ class NetworkStructure(object):
                             weight[i, j, k, l] = 0
         logging.info("清除孤立孔隙: " + str(isolated_node) + ' 个')
 
-        # left_count = 0
-        # right_count = 0
-        # for j in range(model_size[1]):
-        #     for k in range(model_size[2]):
-        #         if np.sum(weight[0, j, k, 17:-1]) > 0:
-        #             left_count += 1
-        #         if np.sum(weight[-1, j, k, 0:8]) > 0:
-        #             right_count += 1
-        # print "Left count =", str(left_count)
-        # print "Right count =", str(right_count)
-
         return weight
 
     @staticmethod
-    def cal_throat_radius(r1, r2, l, curv):
+    def __cal_throat_radius(r1, r2, l, curv):
         """
         公式：利用曲率计算喉道半径
         :param r1: 孔隙1半径
@@ -436,7 +425,7 @@ class NetworkStructure(object):
         return l * t1 * t2 * np.power(np.power(t1, 1 / curv) + np.power(t2, 1 / curv), -curv)
 
     @staticmethod
-    def get_weight(coor1, coor2, ave_coor, anisotropy=(1, 1, 1), rp=(0, 0, 1)):
+    def __get_weight(coor1, coor2, ave_coor, anisotropy=(1, 1, 1), rp=(0, 0, 1)):
         """
         利用配位数获取连接概率
         :param coor1: 配位数1

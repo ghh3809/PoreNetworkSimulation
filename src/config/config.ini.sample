@@ -21,7 +21,17 @@ porosity: 0.1
 # (可选)各项异性参数
 # anisotropy: 1, 1, 1
 
+[fluid]
+# 是否存在
+exist = 0
+# 粘度(Pa·s)
+u = 1E-3
+# 密度(kg/m^3)
+rou = 1000
+
 [gas]
+# 是否存在
+exist = 1
 # 摩尔质量(kg/mol)
 M = 0.016
 # 气体常数(m^3·Pa/(K·mol))
@@ -42,8 +52,10 @@ initialType = 2
 initialValue = 2E5, 1E5, 0, 0, 0, 0
 
 [solver]
-# 方程组解法：J表示使用Jacobi迭代法，GS表示使用GS迭代法（建议，收敛速度会加快）
+# 方程组解法：Time表示使用时间步迭代法（计算非稳态结果），J表示使用Jacobi迭代法，GS表示使用GS迭代法（建议，收敛速度会加快）
 solverType = GS
+# 时间步长(s)（仅当solverType为Time时生效）
+timeStep = 1E-10
 # 是否考虑尺度效应，0表示不考虑，1表示考虑（建议，几乎不增加耗时）
 scaleEffect = 0
 # 是否用"█"展示求解状态，0代表否，数字代表全部方块数量
@@ -52,16 +64,18 @@ showStatus = 0
 [iteration]
 # 是否进行渗透率计算，0表示不计算，其他数字表示每多少次迭代计算一次（会消耗一次迭代的时间）
 showPermeability = 5
-# 是否进行过程保存，0表示不保存，其他数字表示没多少次迭代保存一次（用于异常恢复）
+# 是否进行过程保存，0表示不保存任何结果，其他数字表示每多少次迭代保存一次中间结果，并保存最终结果（用于异常恢复）
+# 如果仅仅希望保存最终结果，可将该值设为一个非常大的数字
+# 另外需要注意，若选择保存，则对于相同的文件名进行重跑时，程序将自动寻找已有结果进行恢复，若要重新运行需要将对应数据文件清除
 save = 0
-# 保存文件名（默认保存到data/seepage_<fileName>_status_xxx.obj目录下，xxx为当前总迭代次数）
-fileName = sample
+# 读取/保存文件名（默认保存到data/seepage_<fileName>_status_xxx.obj目录下，xxx为当前总迭代次数）
+fileName = C040
 # 迭代终止条件（Pa，单次迭代的压力变化最大值与平均值，二者满足其一即终止）
 maxDeltaP = 1
 aveDeltaP = 0.1
 
 [dispersion]
-# 保存文件名（默认保存到data/dispersion_<fileName>_xxx.obj目录下，xxx为类别）
+# 读取/保存文件名（默认保存到data/dispersion_<fileName>_xxx.obj目录下，xxx为类别）
 fileName = sample
 # 模拟总时间(s)
 time = 0.1

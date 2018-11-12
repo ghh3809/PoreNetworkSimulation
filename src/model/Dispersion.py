@@ -67,6 +67,11 @@ class DispersionSolver(object):
             if self.time_step <= 0:
                 raise Exception("param dispersion.timeStep should be positive!")
 
+            # self.scale_effect
+            self.scale_effect = int(conf.get("solver", "scaleEffect"))
+            if self.scale_effect != 0 and self.scale_effect != 1:
+                raise Exception("param solver.scaleEffect should be 0 or 1!")
+
         except Exception as e:
             raise Exception("Load config fail: [" + str(e) + "]")
 
@@ -89,7 +94,7 @@ class DispersionSolver(object):
             raise Exception("未发现合适的网络状态文件，程序退出！")
 
         logging.info("------------------初始化网络状态------------------")
-        logging.info("【重要】发现网络状态文件（3秒后继续）: " + str(status_file_name))
+        logging.info("***** [INFO] 发现网络状态文件（3秒后继续）: " + str(status_file_name) + " *****")
         time.sleep(3)
         logging.info("从文件重建网络状态中……")
         with open(status_file_name, 'r') as f:
@@ -117,7 +122,7 @@ class DispersionSolver(object):
                 with open(cache_file_name, 'r') as f:
                     self.cache = cPickle.load(f)
             logging.info("计算网络流量场中……")
-            self.mass_flux, self.velocity = self.status.get_mass_flux(self.cache, 0)
+            self.mass_flux, self.velocity = self.status.get_mass_flux(self.cache, self.scale_effect, 0)
             with open(mass_flux_file, 'w') as f:
                 cPickle.dump(self.mass_flux, f)
             with open(velocity_file, 'w') as f:
@@ -142,23 +147,12 @@ class DispersionSolver(object):
         logging.info("粒子数量: " + str(self.particles))
         logging.info("时间步长(s): " + str(self.time_step))
 
-    def start_time_simulation(self):
-        """
-        开始模拟
-        :return:
-        """
-        res = np.zeros([self.particles, 3])
-        for i in range(self.particles):
-            res[i, :] = self.simulate_final_position()
-            logging.debug("Particle ID = " + str(i) + ", Final position = " + str(res[i]))
-        return res
-
     def start_path_simulation(self):
         """
         开始模拟
         :return:
         """
-        total_size = int(self.time / self.time_step)
+        total_size = int(round(self.time / self.time_step))
         res = np.zeros([self.particles, total_size + 1, 4])
         flux = np.sum(self.mass_flux[0, :, :, :], 2).reshape(self.model_size[1] * self.model_size[2])
         for i in range(self.particles):
@@ -174,48 +168,13 @@ class DispersionSolver(object):
                         f.write(str(res[i, j, k]) + '\n')
         return res
 
-    def simulate_once(self, pos):
-        """
-        计算从指定位置出发，到达的下一个位置
-        :param pos: 起始位置
-        :return:
-        """
-        if pos[0] >= self.model_size[0] - 1:
-            raise Exception("Position out of range!")
-        flux = self.mass_flux[pos[0], pos[1], pos[2], :].copy()
-        for i in range(26):
-            if flux[i] < 0:
-                flux[i] = 0
-        index = Tools.Tools.generate_randi_from_list(flux)
-        rp = Tools.Tools.get_relative_position(index)
-        indt = (pos[0], pos[1], pos[2], index)
-        dist = self.status.ns.unit_size * np.sqrt(np.sum(np.square(rp))) * self.status.ns.character_length
-        path_time = dist / self.velocity[indt]
-        return rp, path_time
-
-    def simulate_final_position(self):
-        """
-        模拟特定时间内，一个粒子到达的最终位置
-        :return:
-        """
-        pos = np.array([0, self.model_size[1] / 2, self.model_size[2] / 2])
-        while True:
-            if pos[0] >= self.model_size[0] - 1:
-                raise Exception("Simulation time too less!")
-            rp, add_time = self.simulate_once(pos)
-            if add_time < self.time:
-                self.time -= add_time
-                pos = np.add(pos, rp)
-            else:
-                return np.add(pos, np.multiply(float(self.time) / float(add_time), rp))
-
     def simulate_paths(self, start_pos):
         """
         模拟一个粒子随时间前进的过程
         :return:
         """
         pos = start_pos
-        total_size = int(self.time / self.time_step)
+        total_size = int(round(self.time / self.time_step))
         paths = np.zeros([total_size + 1, 4])
 
         # 初始化
@@ -243,6 +202,25 @@ class DispersionSolver(object):
             current_count += 1
 
         return paths
+
+    def simulate_once(self, pos):
+        """
+        计算从指定位置出发，到达的下一个位置
+        :param pos: 起始位置
+        :return:
+        """
+        if pos[0] >= self.model_size[0] - 1:
+            raise Exception("Position out of range!")
+        flux = self.mass_flux[pos[0], pos[1], pos[2], :].copy()
+        for i in range(26):
+            if flux[i] < 0:
+                flux[i] = 0
+        index = Tools.Tools.generate_randi_from_list(flux)
+        rp = Tools.Tools.get_relative_position(index)
+        indt = (pos[0], pos[1], pos[2], index)
+        dist = self.status.ns.unit_size * np.sqrt(np.sum(np.square(rp))) * self.status.ns.character_length
+        path_time = dist / self.velocity[indt]
+        return rp, path_time
 
 
 if __name__ == '__main__':

@@ -22,6 +22,7 @@ function param = Fun_PlotDistribution(model_size, pos, particles, dispersion_typ
     % 计算拟合结果，瞬间投放利用正态函数拟合，持续投放使用erf函数拟合
     if strcmp(dispersion_type, 'once')
         [muhat, sigmahat] = normfit(x(x > 0));
+        [muhat, sigmahat] = normfit(x(x > muhat - 3 * sigmahat & x < muhat + 3 * sigmahat));
     else
         fitx = 0:bar_width:model_size(1);
         fity = dist;

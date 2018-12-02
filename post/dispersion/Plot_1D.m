@@ -13,11 +13,11 @@
 % ------------------------- %
 
 % 模型设置项
-data_file  = 'dispersion_2000_x8_paths.txt';       % 路径数据文件
-model_size = [2000, 30, 30];                    % 模型尺寸
-time       = 0.25;                                 % 模拟时间
+data_file  = 'dispersion_4000_x1_paths.txt';       % 路径数据文件
+model_size = [4000, 30, 30];                    % 模型尺寸
+time       = 8;                                 % 模拟时间
 particles  = 10000;                             % 模拟粒子数
-time_step  = 1e-4;                              % 时间步长
+time_step  = 4e-3;                              % 时间步长
 unit_size  = 621.3161e-9;                       % 单元尺寸(m)
 
 % 计算设置项

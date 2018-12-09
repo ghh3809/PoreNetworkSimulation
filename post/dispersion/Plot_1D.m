@@ -13,18 +13,20 @@
 % ------------------------- %
 
 % 模型设置项
-data_file  = 'dispersion_4000_x1_paths.txt';       % 路径数据文件
-model_size = [4000, 30, 30];                    % 模型尺寸
-time       = 8;                                 % 模拟时间
+data_file  = 'dispersion_2000_x1_paths.txt';    % 路径数据文件
+model_size = [2000, 30, 30];                    % 模型尺寸
+time       = 2;                                 % 模拟时间
 particles  = 10000;                             % 模拟粒子数
-time_step  = 4e-3;                              % 时间步长
+time_step  = 1e-3;                              % 时间步长
 unit_size  = 621.3161e-9;                       % 单元尺寸(m)
+
+Script_Set_Param;
 
 % 计算设置项
 plot_type          = 'dist';                    % move: 显示粒子运动; dist: 显示粒子分布
 dispersion_type    = 'once';                    % once: 瞬间投放; continue: 持续投放
 particles_per_step = 50;                        % 每一迭代步投放的粒子数量（持续投放生效）
-save               = 0;                         % 0: 不保存; 1: 保存动图结果
+is_save            = 0;                         % 0: 不保存; 1: 保存动图结果
 save_name          = 'fluid_continue_1.gif';    % 需要保存的文件名
 
 % ------------------------- %
@@ -76,7 +78,9 @@ for i = 1:total_steps
     end
     
     % 保存动图
-    if save ~= 0
+    if is_save ~= 0
         Fun_SaveGIF(save_name, i);
     end
 end
+
+Script_Save_Result;

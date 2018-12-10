@@ -71,5 +71,5 @@ for step = 1:5:1501
     title(ax2, ['Dispersion Coefficient - Velocity, Distance = ', num2str(unit_size * step, '%.2E'), ' m']);
     drawnow;
     imgno = imgno + 1;
-    Fun_SaveGIF('Dispersion Coefficient - Velocity.gif', imgno);
+    Fun_SaveGIF('./Figure/Dispersion Coefficient - Velocity.gif', imgno);
 end

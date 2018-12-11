@@ -68,6 +68,11 @@ for i = 1:total_steps
         end
     end
     
+    if (i ~= 1) && (~all(pos(1, :)))
+        total_steps = i - 1;
+        break;
+    end
+    
     % »æÍ¼
     if strcmp(plot_type, 'dist')
         res(i, :) = Fun_PlotDistribution(model_size, pos, particles, dispersion_type, time_step * (i-1), unit_size);

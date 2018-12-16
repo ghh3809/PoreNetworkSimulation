@@ -8,9 +8,18 @@ for i = 1:length(radius)
     load(['dispersion_r', num2str(radius(i)), '_paths.mat']);
     data(:, i) = interp1(time_step * (2:total_steps)' .* res(2:total_steps, 1) / unit_size,...
         res(2:total_steps, 2), 0:2000);
+    tmp = interp1(time_step * (2:total_steps)' .* res(2:total_steps, 1) / unit_size,...
+        res(2:total_steps, 1), 0:2000);
+    for j = 500:2001
+        if isnan(data(j, i))
+            break;
+        end
+    end
+    disp(['r', num2str(radius(i)), ': valid = ', num2str(j), ', Dm = '...
+        num2str(data(j-1, i)), ',V = ', num2str(tmp(j-1))]);
 end
 
-for step = 1:50:2001
+for step = 1:10:2001
     x = radius' * 1e-9;
     y = data(step, :);
     if any(isnan(y))

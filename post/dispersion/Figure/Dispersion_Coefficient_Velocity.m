@@ -7,6 +7,12 @@ for i = 1:length(velocity)
     load(['dispersion_2000_x', num2str(velocity(i)), '_paths.mat']);
     data(:, i) = interp1(res(2:end, 1) .* (1:total_steps-1)' * time_step, res(2:end, 2),...
         (0:1500)' * unit_size, 'Linear');
+    for j = 500:1501
+        if isnan(data(j, i))
+            break;
+        end
+    end
+    disp(['x', num2str(velocity(i)), ': valid = ', num2str(j), ', Dm = ', num2str(data(j-1, i))]);
 end
 
 slop = zeros(1501, 1);
@@ -71,5 +77,5 @@ for step = 1:5:1501
     title(ax2, ['Dispersion Coefficient - Velocity, Distance = ', num2str(unit_size * step, '%.2E'), ' m']);
     drawnow;
     imgno = imgno + 1;
-    Fun_SaveGIF('./Figure/Dispersion Coefficient - Velocity.gif', imgno);
+%     Fun_SaveGIF('./Figure/Dispersion Coefficient - Velocity.gif', imgno);
 end

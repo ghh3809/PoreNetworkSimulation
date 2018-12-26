@@ -1,0 +1,17 @@
+x = [100, 200, 400, 800, 1600, 3200, 6400] * 1e-9;
+y = [1.3516E-17, 5.1598E-17, 2.0255E-16, 8.0276E-16, 3.1923E-15, 1.2761E-14, 5.0897E-14];
+p = polyfit(log(x), log(y), 1);
+r = corrcoef(log(x), log(y));
+xx = x;
+yy = exp(polyval(p, log(xx)));
+cla;
+loglog(x, y, 'kx', 'MarkerSize', 10, 'Linewidth', 2);
+hold on;
+loglog(xx, yy, 'r', 'Linewidth', 2);
+% axis([1e-7, 1e-5, 1e-10, 1e-4]);
+text(1e-6, 4e-16, ['K_{app} = ', num2str(exp(p(2)), '%.2e'), '\times r^{ ', num2str(p(1), '%.2f'), '}'], 'Fontsize', 14);
+text(1e-6, 1.5e-16, ['R^2 = ', num2str(r(1,2)^2, '%.4f')], 'Fontsize', 14);
+title('Permeability - Pore Radius');
+xlabel('Pore Radius r (m)');
+ylabel('Permeability K_{app} (m^2)');
+legend('Simulation', 'Fitting');

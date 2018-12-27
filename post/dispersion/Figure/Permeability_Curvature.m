@@ -1,0 +1,13 @@
+clear;clc;
+x = [1, 2, 4, 8, 12, 16, 20, 24, 28, 32] * 0.01;
+y = [8.4268E-17, 6.8034E-17, 4.2455E-17, 1.6942E-17, 1.0843E-17, 6.5001E-18, 3.7777E-18, 2.0819E-18, 1.0826E-18, 5.5419E-19];
+[xx, yy] = Uniform_BSpline(x, y, 4);
+cla;
+plot(x, y, 'kx', 'MarkerSize', 10, 'Linewidth', 2);
+hold on;
+plot(xx, yy, 'r', 'Linewidth', 2);
+% axis([1e-7, 1e-5, 1e-10, 1e-4]);
+title('Permeability - Pore Radius Deviation');
+xlabel('Curvature');
+ylabel('Permeability K_{app} (m^2)');
+legend('Simulation', 'B-Spline Fitting');

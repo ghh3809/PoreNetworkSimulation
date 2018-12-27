@@ -1,0 +1,17 @@
+clear;clc;
+x = [0.01, 0.05:0.05:0.4] * 100;
+y = [1.5653E-18, 5.5640E-18, 1.3499E-17, 2.3980E-17, 3.7448E-17, 5.5049E-17, 7.7361E-17, 1.0875E-16, 1.5424E-16];
+[xx, yy] = Uniform_BSpline(x, y, 3);
+cla;
+plot(x, y, 'kx', 'MarkerSize', 10, 'Linewidth', 2);
+hold on;
+plot(xx, yy, 'r', 'Linewidth', 2);
+p = polyfit(xx(1:10:51), yy(1:10:51), 2);
+xxx = linspace(0, xx(1), 100);
+yyy = polyval(p, xxx);
+plot(xxx, yyy, 'r:', 'Linewidth', 1);
+% axis([0, 16, 0, 1.6e-17]);
+title('Permeability - Porosity');
+xlabel('Porosity (%)');
+ylabel('Permeability K_{app} (m^2)');
+legend('Simulation', 'B-Spline Fitting', 'Continuation');

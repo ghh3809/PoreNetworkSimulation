@@ -1,0 +1,17 @@
+clear;clc;
+x = 4:2:16;
+y = [5.0519E-18, 8.3021E-18, 1.0335E-17, 1.1778E-17, 1.2549E-17, 1.3031E-17, 1.3244E-17];
+[xx, yy] = Uniform_BSpline(x, y, 4);
+cla;
+plot(x, y, 'kx', 'MarkerSize', 10, 'Linewidth', 2);
+hold on;
+plot(xx, yy, 'r', 'Linewidth', 2);
+p = polyfit(xx(1:10:51), yy(1:10:51), 2);
+xxx = linspace(0, xx(1), 100);
+yyy = polyval(p, xxx);
+plot(xxx, yyy, 'r:', 'Linewidth', 1);
+axis([0, 16, 0, 1.6e-17]);
+title('Permeability - Coordination Number');
+xlabel('Coordination Number');
+ylabel('Permeability K_{app} (m^2)');
+legend('Simulation', 'B-Spline Fitting', 'Continuation');

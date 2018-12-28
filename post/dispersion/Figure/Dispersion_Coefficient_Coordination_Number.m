@@ -25,8 +25,7 @@ for step = 1:10:2001
     if any(isnan(y))
         continue;
     end
-    xx = 2:20;
-    yy = interp1(x, y, xx, 'pchip');
+    [xx, yy] = Uniform_BSpline(x, y, 3);
     cla;
     plot(x, y, 'kx', 'MarkerSize', 10, 'Linewidth', 2);
     hold on;
@@ -35,6 +34,6 @@ for step = 1:10:2001
     title('Dispersion Coefficient - Coordination Number');
     xlabel('Coordination Number');
     ylabel('Dispersion Coefficient D_m (m^2/s)');
-    legend('Simulation', 'Fitting');
+    legend('Simulation', 'B-Spline Fitting');
     drawnow;
 end

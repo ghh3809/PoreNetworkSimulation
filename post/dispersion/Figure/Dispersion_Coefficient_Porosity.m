@@ -1,7 +1,7 @@
 % 对于相同的网络大小，不同孔隙半径的网络结构，进行绘图
 clear; clc;
-porosity = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]';
-porosity_txt = {'001', '005', '01', '015', '02', '025', '03', '035', '04'};
+porosity = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35]';
+porosity_txt = {'001', '005', '01', '015', '02', '025', '03', '035'};
 data = zeros(2001, length(porosity));
 
 for i = 1:length(porosity)
@@ -26,13 +26,12 @@ for step = 1:10:2001
     if any(isnan(y))
         continue;
     end
-    xx = 0:0.01:0.4;
-    yy = interp1(x, y, xx, 'pchip');
+    [xx, yy] = Uniform_BSpline(x, y, 3);
     cla;
     plot(x, y, 'kx', 'MarkerSize', 10, 'Linewidth', 2);
     hold on;
     plot(xx, yy, 'r', 'Linewidth', 2);
-    axis([0, 0.4, 0, 2e-9]);
+    axis([0, 0.35, 0, 2e-9]);
     title('Dispersion Coefficient - Porosity');
     xlabel('Porosity');
     ylabel('Dispersion Coefficient D_m (m^2/s)');

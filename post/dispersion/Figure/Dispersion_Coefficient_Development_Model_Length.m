@@ -7,7 +7,7 @@ for i = 1:length(model_length)
     dist = time_step * (0:total_steps-1)' .* res(:, 1);
     index = find(res(:, 2) == max(res(:, 2)));
     index = index(1);
-    plot(dist(1:index), smooth(res(1:index, 2) * model_length(i) / model_length(1), 20), 'linewidth', 2);
+    semilogx(dist(1:index), smooth(res(1:index, 2) * model_length(i) / model_length(1), 20), 'linewidth', 2);
     hold on;
 end
 title('Dispersion Coefficient Development - Model Length');

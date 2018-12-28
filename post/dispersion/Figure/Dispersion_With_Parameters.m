@@ -63,17 +63,20 @@ k = [1.3516E-17, 5.1598E-17, 2.0255E-16, 8.0276E-16, 3.1923E-15,...
 % rcoplot(r, rint);
 
 % plot
-% index = [1:27, 32:47];
-% X = n(index) .* L(index) .* V(index);
-% Y = D(index);
-% k = Y / X;
-% loglog(X, Y, 'kx', 'markerSize', 10, 'linewidth', 2);
-% hold on;
-% plot(X, k * X, 'r', 'linewidth', 2);
-% title('Dispersion Coefficient with Parameters');
-% xlabel('nLV (m^2/s)');
-% ylabel('Dispersion Coefficient D_m (m^2/s)');
-% legend('Simulation', 'Fitting');
+index = [1:3, 8:27, 39:47];
+X = L(index) .* V(index);
+Y = D(index);
+slope = Y / X;
+r = corrcoef(log(X), log(Y));
+loglog(X, Y, 'kx', 'markerSize', 10, 'linewidth', 2);
+hold on;
+plot(X, slope * X, 'r', 'linewidth', 2);
+text(1e-9, 1e-9, ['R^2 = ', num2str(r(1,2)^2, '%.4f')], 'Fontsize', 12);
+axis([1e-10, 1e-8, 1e-10, 1e-8]);
+title('Dispersion Coefficient with Parameters');
+xlabel('L\timesv (m^2/s)');
+ylabel('Dispersion Coefficient D_m (m^2/s)');
+legend('Simulation', 'Fitting');
 
 % fitting
 % index = [1:27, 28:47];
@@ -83,17 +86,17 @@ k = [1.3516E-17, 5.1598E-17, 2.0255E-16, 8.0276E-16, 3.1923E-15,...
 % rcoplot(r, rint);
 
 % plot
-index = [1:3, 8:47];
-X = (L(index) .^ (-2)) .* (Rth(index) .^ 4);
-c = (L(index) ./ (L(index)-2*Rp(index)) + L(index) ./ (sqrt(2)*L(index)-2*Rp(index)) * 4 + L(index) ./ (sqrt(3)*L(index)-2*Rp(index)) * 4) / 9 .* (0.1519 * n(index) - 0.3298);
-X = X .* c;
-Y = k(index);
-loglog(X, Y, 'kx', 'markerSize', 10, 'linewidth', 2);
-r = corrcoef(log(X), log(Y));
-text(1e-17, 4e-18, ['R^2 = ', num2str(r(1,2)^2, '%.4f')], 'Fontsize', 12);
-hold on;
-plot([1e-19, 1e-15], [1e-19, 1e-15], 'r:', 'linewidth', 2);
-title('Permeability Fitting');
-xlabel('f(\zeta)r_{th}^4/L^2 (m^2)');
-ylabel('Permeability k_{app} (m^2)');
-legend('Simulation', 'Prediction');
+% index = [1:3, 8:47];
+% X = (L(index) .^ (-2)) .* (Rth(index) .^ 4);
+% c = (L(index) ./ (L(index)-2*Rp(index)) + L(index) ./ (sqrt(2)*L(index)-2*Rp(index)) * 4 + L(index) ./ (sqrt(3)*L(index)-2*Rp(index)) * 4) / 9 .* (0.1519 * n(index) - 0.3298);
+% X = X .* c;
+% Y = k(index);
+% loglog(X, Y, 'kx', 'markerSize', 10, 'linewidth', 2);
+% r = corrcoef(log(X), log(Y));
+% text(1e-17, 4e-18, ['R^2 = ', num2str(r(1,2)^2, '%.4f')], 'Fontsize', 12);
+% hold on;
+% plot([1e-19, 1e-15], [1e-19, 1e-15], 'r:', 'linewidth', 2);
+% title('Permeability Fitting');
+% xlabel('f(\zeta)r_{th}^4/L^2 (m^2)');
+% ylabel('Permeability k_{app} (m^2)');
+% legend('Simulation', 'Prediction');

@@ -20,14 +20,14 @@ particles  = 10000;                             % 模拟粒子数
 time_step  = 1e-3;                              % 时间步长
 unit_size  = 621.3161e-9;                       % 单元尺寸(m)
 
-Script_Set_Param;
+% Script_Set_Param;
 
 % 计算设置项
 plot_type          = 'dist';                    % move: 显示粒子运动; dist: 显示粒子分布
-dispersion_type    = 'once';                    % once: 瞬间投放; continue: 持续投放
+dispersion_type    = 'continue';                    % once: 瞬间投放; continue: 持续投放
 particles_per_step = 50;                        % 每一迭代步投放的粒子数量（持续投放生效）
 is_save            = 0;                         % 0: 不保存; 1: 保存动图结果
-save_name          = 'fluid_continue_1.gif';    % 需要保存的文件名
+save_name          = 'fluid_continue_2000.gif';    % 需要保存的文件名
 
 % ------------------------- %
 %      Part2 : 计算部分      %
@@ -68,10 +68,10 @@ for i = 1:total_steps
         end
     end
     
-    if (i ~= 1) && (~all(pos(1, :)))
-        total_steps = i - 1;
-        break;
-    end
+%     if (i ~= 1) && (~all(pos(1, :)))
+%         total_steps = i - 1;
+%         break;
+%     end
     
     % 绘图
     if strcmp(plot_type, 'dist')
@@ -88,4 +88,4 @@ for i = 1:total_steps
     end
 end
 
-Script_Save_Result;
+% Script_Save_Result;

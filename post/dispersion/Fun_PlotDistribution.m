@@ -29,7 +29,7 @@ function param = Fun_PlotDistribution(model_size, pos, particles, dispersion_typ
         maxind = find(fity > 0, 1, 'last');
         if maxind > 3
             myfun = fittype('c*(1-erf((x-a)*b))', 'independent', 'x');
-            f = fit(fitx(2:maxind)', fity(2:maxind)', myfun, 'StartPoint', [now_time * 1855, 0.05, mean(dist(1:maxind)) / 2]);
+            f = fit(fitx(2:maxind)', fity(2:maxind)', myfun, 'StartPoint', [now_time * 927, 0.02, mean(dist(1:maxind)) / 2]);
             % 上面几个初值选取：平均速度，看情况，初始高度的一半
         end
     end

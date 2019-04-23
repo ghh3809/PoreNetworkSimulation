@@ -15,7 +15,6 @@ import logging
 import configparser
 import numpy as np
 
-from StatusCache import StatusCache
 from utils import Tools
 
 
@@ -45,16 +44,27 @@ class Simulator(object):
             if self.solver_type != 'J' and self.solver_type != 'GS' and self.solver_type != 'Time':
                 raise Exception("param gas.solverType should be J, GS or Time!")
 
-            # self.time_step
+            # self.max_time_step
             try:
-                self.time_step = float(conf.get("solver", "timeStep"))
-                if self.time_step <= 0:
-                    raise Exception("param solver.timeStep should be positive!")
+                self.max_time_step = float(conf.get("solver", "maxTimeStep"))
+                if self.max_time_step <= 0:
+                    raise Exception("param solver.maxTimeStep should be positive!")
             except configparser.NoOptionError:
                 if self.solver_type != 'Time':
-                    self.time_step = 0
+                    self.max_time_step = 0
                 else:
-                    raise Exception("param solver.timeStep should exists!")
+                    raise Exception("param solver.maxTimeStep should exists!")
+
+            # self.min_time_step
+            try:
+                self.min_time_step = float(conf.get("solver", "minTimeStep"))
+                if self.min_time_step <= 0:
+                    raise Exception("param solver.minTimeStep should be positive!")
+            except configparser.NoOptionError:
+                if self.solver_type != 'Time':
+                    self.min_time_step = 0
+                else:
+                    raise Exception("param solver.minTimeStep should exists!")
 
             # self.scale_effect
             self.scale_effect = int(conf.get("solver", "scaleEffect"))
@@ -80,19 +90,18 @@ class Simulator(object):
         logging.info("------------------读取求解器配置文件------------------")
         logging.info("迭代方法: " + str(self.solver_type))
         if self.solver_type == "Time":
-            logging.info("时间步长：" + str(self.time_step))
+            logging.info("最大时间步长(s)：" + str(self.max_time_step))
+            logging.info("最小时间步长(s)：" + str(self.min_time_step))
         logging.info("是否考虑尺度效应: " + ("是" if self.scale_effect == 1 else "否"))
         logging.info("是否显示求解进度: " + ("否" if self.show_status == 0 else ("是，总数 = " + str(self.show_status))))
 
-    def bind_network_status(self, network_status, status_cache):
+    def bind_network_status(self, network_status):
         """
         绑定网络状态到当前求解器
         :param network_status: 网络状态
-        :param status_cache: 计算缓存
         :return:
         """
         self.ns = network_status
-        self.sc = status_cache
 
     def iterate_once(self):
         """
@@ -100,26 +109,12 @@ class Simulator(object):
         :return:
         """
         if self.solver_type == 'J' or self.solver_type == 'GS':
-            self.ns.calculate_equation(self.sc, self.scale_effect, self.show_status, self.solver_type)
+            self.ns.calculate_equation(self.scale_effect, self.show_status, self.solver_type)
+        elif self.solver_type == 'Time':
+            self.ns.calculate_iteration(self.max_time_step, self.min_time_step, self.scale_effect)
         else:
-            self.ns.calculate_iteration(self.sc, self.time_step, self.scale_effect, self.show_status)
+            raise Exception("Method can only be J or GS!")
         self.iters += 1
-
-    def get_mass_flux(self):
-        """
-        获取网络的质量流量
-        :return:
-        """
-        if self.ns is None:
-            raise Exception("请首先绑定网络状态数组！")
-        else:
-            return self.ns.get_mass_flux(self.sc, self.scale_effect, 0)
-
-    def get_permeability(self):
-        if self.ns is None:
-            raise Exception("请首先绑定网络状态数组！")
-        else:
-            return self.ns.get_permeability(self.sc, self.scale_effect)
 
 
 if __name__ == '__main__':

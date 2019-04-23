@@ -27,7 +27,6 @@ from entity import FluidConstant as Fluid
 from entity import NetworkStructure as Structure
 from entity import NetworkStatus as Status
 from entity import Simulator as Simu
-from entity import StatusCache as Cache
 
 
 logging_flag = False
@@ -138,8 +137,6 @@ class SeepageIterator(object):
             logging.info("***** [INFO] 网络状态文件不存在，即将重建网络！ *****")
             gas_constant = Gas.GasConstant()
             fluid_constant = Fluid.FluidConstant()
-            if fluid_constant.exist != 0:
-                logging.info("***** [WARNING] 由于气体配置与流体配置均存在，以下计算以流体参数为准 *****")
             network_structure = Structure.NetworkStructure(Structure.NetworkStructureHandler())
             network_status = Status.NetworkStatus(Status.NetworkStatusHandler(), network_structure, gas_constant, fluid_constant)
         else:
@@ -154,34 +151,10 @@ class SeepageIterator(object):
             network_status.ns.nc.print_config()
             network_status.sc.print_config()
 
-        # 判断网络缓存是否存在
-        cache_file_name = "../data/" + self.file_name + "_cache.obj"
-        if status_file_name == "" or not os.path.exists(cache_file_name):
-            logging.info("***** [INFO] 网络缓存文件无效或不存在，即将重建缓存！ *****")
-            status_cache = Cache.StatusCache(network_status)
-        else:
-            logging.info("***** [INFO] 发现网络缓存文件（3秒后继续）: " + str(cache_file_name) + " *****")
-            time.sleep(3)
-            logging.info("从文件重建计算缓存中……")
-            with open(cache_file_name, 'r') as f:
-                status_cache = cPickle.load(f)
-
-        # 绑定网络状态与缓存
+        # 绑定网络状态
         simulator = Simu.Simulator()
-        simulator.bind_network_status(network_status, status_cache)
+        simulator.bind_network_status(network_status)
         simulator.iters = iters if max_iters == -1 else max_iters
-
-        # 保存网络缓存
-        if self.save != 0:
-            cache_path = '../data/' + self.file_name + '_cache.obj'
-            if not os.path.exists(cache_path):
-                if not os.path.exists(os.path.dirname(cache_path)):
-                    os.makedirs(os.path.dirname(cache_path))
-                with open(cache_path, 'w') as f:
-                    cPickle.dump(simulator.sc, f)
-            else:
-                logging.info("***** [WARNING] 缓存文件已存在，无法重新保存！（如果确认是当前网络的缓存文件，请忽略该提示） *****")
-                time.sleep(3)
 
         return simulator
 
@@ -194,12 +167,24 @@ class SeepageIterator(object):
         last_p = self.simulator.ns.pressure.copy()
         self.simulator.iterate_once()
         # print np.average(np.average(self.simulator.ns.pressure, 2), 1)
+        # print np.average(np.average(self.simulator.ns.sr, 2), 1)
+        # data_p = self.simulator.ns.pressure[1:-1,:,:].reshape([75])
+        # data_sr = self.simulator.ns.sr[1:-1,:,:].reshape([75])
+        # pores = 0.0
+        # for i in data_p:
+        #     if i != 5E6:
+        #         pores += 1.0
+        # if pores > 0:
+        #     print "pores =", pores
+        #     print (np.sum(data_sr) - (75.0-pores)) / pores
         ave_delta_p = np.average(np.abs(self.simulator.ns.pressure - last_p))
         max_delta_p = np.max(np.abs(self.simulator.ns.pressure - last_p))
         final_perm = 0
 
         # 常规输出
         output_str = "Iter = " + str(self.simulator.iters)
+        if self.simulator.solver_type == 'Time':
+            output_str += ", Time = " + format(self.simulator.ns.total_time, '.4e') + " s"
         output_str += ", Max △P = " + format(max_delta_p, '.4f') + " Pa"
         output_str += ", Ave △P = " + format(ave_delta_p, '.4f') + " Pa"
 
@@ -207,7 +192,7 @@ class SeepageIterator(object):
         if self.show_permeability > 0 and self.simulator.iters % self.show_permeability == 0:
             self.permeability[2] = self.permeability[1]
             self.permeability[1] = self.permeability[0]
-            self.permeability[0] = self.simulator.get_permeability()
+            self.permeability[0] = self.simulator.ns.get_permeability(self.simulator.scale_effect)
             final_perm = self.__cal_final_perm()
             output_str += ", Kperm = " + format(self.permeability[0], '.4e') + " m^2"
             output_str += ", Final Kperm = " + format(final_perm, '.4e') + " m^2"

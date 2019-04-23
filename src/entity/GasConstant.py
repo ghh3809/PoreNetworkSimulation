@@ -31,11 +31,6 @@ class GasConstant(object):
 
         # 读取具体配置
         try:
-            # self.exist
-            self.exist = int(conf.get("gas", "exist"))
-            if self.exist != 0:
-                self.exist = 1
-
             # self.M
             self.M = float(conf.get("gas", "M"))
             if self.M <= 0:
@@ -67,12 +62,11 @@ class GasConstant(object):
         打印当前的配置
         :return:
         """
-        if self.exist != 0:
-            logging.info("------------------读取气体参数配置文件------------------")
-            logging.info("摩尔质量M(kg/mol): " + str(self.M))
-            logging.info("气体常数R(m^3·Pa/(K·mol)): " + str(self.R))
-            logging.info("温度T(K): " + str(self.T))
-            logging.info("粘度u(Pa·s): " + str(self.u))
+        logging.info("------------------读取气体参数配置文件------------------")
+        logging.info("摩尔质量M(kg/mol): " + str(self.M))
+        logging.info("气体常数R(m^3·Pa/(K·mol)): " + str(self.R))
+        logging.info("温度T(K): " + str(self.T))
+        logging.info("粘度u(Pa·s): " + str(self.u))
 
 
 if __name__ == '__main__':
